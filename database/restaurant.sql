@@ -11,372 +11,152 @@
  Target Server Version : 80040 (8.0.40)
  File Encoding         : 65001
 
- Date: 28/12/2025 10:37:53
+ Date: 28/12/2025 14:52:39
 */
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ----------------------------
--- Table structure for admin_user
+-- Table structure for t_dish
 -- ----------------------------
-DROP TABLE IF EXISTS `admin_user`;
-CREATE TABLE `admin_user`  (
-  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
-  `username` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `password_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `role` enum('ADMIN','STAFF','KITCHEN') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'ADMIN',
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `username`(`username` ASC) USING BTREE,
-  INDEX `idx_admin_user_active`(`is_active` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+DROP TABLE IF EXISTS `t_dish`;
+CREATE TABLE `t_dish`  (
+  `dish_id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `price` decimal(10, 2) NOT NULL,
+  `category` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `rating` float NULL DEFAULT 5,
+  `url` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `description` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  PRIMARY KEY (`dish_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 33 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Records of admin_user
+-- Records of t_dish
 -- ----------------------------
-INSERT INTO `admin_user` VALUES (1, 'admin', '$2y$10$REPLACE_WITH_BCRYPT_HASH', 'ADMIN', 1, '2025-12-28 10:10:30', '2025-12-28 10:10:30');
+INSERT INTO `t_dish` VALUES (1, '宫保鸡丁', 28.00, '川菜', 4.8, '/img/coke.png', '经典川菜，微辣香脆');
+INSERT INTO `t_dish` VALUES (2, '白切鸡', 32.00, '粤菜', 4.6, '/img/coke.png', '肉质鲜嫩，清淡爽口');
+INSERT INTO `t_dish` VALUES (3, '鱼香肉丝', 32.00, '川菜', 4.7, '/img/coke.png', '酸甜微辣，下饭神器');
+INSERT INTO `t_dish` VALUES (4, '麻婆豆腐', 18.00, '川菜', 4.7, '/img/coke.png', '麻辣鲜香，豆腐嫩滑');
+INSERT INTO `t_dish` VALUES (5, '回锅肉', 36.00, '川菜', 4.5, '/img/coke.png', '肥而不腻，蒜苗香');
+INSERT INTO `t_dish` VALUES (6, '糖醋里脊', 30.00, '鲁菜', 4.6, '/img/coke.png', '酸甜酥脆，老少皆宜');
+INSERT INTO `t_dish` VALUES (7, '红烧肉', 38.00, '本帮', 4.7, '/img/coke.png', '肥瘦相间，入口即化');
+INSERT INTO `t_dish` VALUES (8, '清蒸鲈鱼', 48.00, '粤菜', 4.8, '/img/coke.png', '鲜嫩清爽，葱姜提鲜');
+INSERT INTO `t_dish` VALUES (9, '蒜蓉粉丝虾', 52.00, '粤菜', 4.7, '/img/coke.png', '蒜香浓郁，粉丝入味');
+INSERT INTO `t_dish` VALUES (10, '酸菜鱼', 46.00, '川菜', 4.6, '/img/coke.png', '酸辣开胃，鱼片滑嫩');
+INSERT INTO `t_dish` VALUES (11, '小炒黄牛肉', 42.00, '湘菜', 4.5, '/img/coke.png', '锅气十足，微辣爽');
+INSERT INTO `t_dish` VALUES (12, '剁椒鱼头', 58.00, '湘菜', 4.6, '/img/coke.png', '剁椒香辣，鱼头鲜');
+INSERT INTO `t_dish` VALUES (13, '口水鸡', 34.00, '川菜', 4.6, '/img/coke.png', '红油麻辣，鸡肉嫩');
+INSERT INTO `t_dish` VALUES (14, '干锅花菜', 26.00, '湘菜', 4.4, '/img/coke.png', '干锅香辣，脆嫩');
+INSERT INTO `t_dish` VALUES (15, '地三鲜', 24.00, '东北', 4.5, '/img/coke.png', '茄子土豆青椒，家常');
+INSERT INTO `t_dish` VALUES (16, '锅包肉', 32.00, '东北', 4.6, '/img/coke.png', '外酥里嫩，酸甜');
+INSERT INTO `t_dish` VALUES (17, '西红柿炒蛋', 16.00, '家常', 4.7, '/img/coke.png', '经典家常，酸甜适中');
+INSERT INTO `t_dish` VALUES (18, '青椒肉丝', 22.00, '家常', 4.5, '/img/coke.png', '清爽下饭');
+INSERT INTO `t_dish` VALUES (19, '可乐鸡翅', 28.00, '家常', 4.6, '/img/coke.png', '甜咸适口，色泽诱人');
+INSERT INTO `t_dish` VALUES (20, '番茄牛腩', 45.00, '家常', 4.7, '/img/coke.png', '汤汁浓郁，牛腩软烂');
+INSERT INTO `t_dish` VALUES (21, '扬州炒饭', 18.00, '苏菜', 4.4, '/img/coke.png', '粒粒分明，配料丰富');
+INSERT INTO `t_dish` VALUES (22, '担担面', 15.00, '川菜', 4.5, '/img/coke.png', '麻辣咸香，面条劲道');
+INSERT INTO `t_dish` VALUES (23, '牛肉拉面', 20.00, '西北', 4.6, '/img/coke.png', '汤清味浓，牛肉实在');
+INSERT INTO `t_dish` VALUES (24, '炸酱面', 16.00, '京味', 4.4, '/img/coke.png', '酱香浓郁');
+INSERT INTO `t_dish` VALUES (25, '酸辣汤', 12.00, '家常', 4.3, '/img/coke.png', '开胃暖身');
+INSERT INTO `t_dish` VALUES (26, '紫菜蛋花汤', 10.00, '家常', 4.2, '/img/coke.png', '清淡鲜美');
+INSERT INTO `t_dish` VALUES (27, '可乐', 5.00, '饮品', 4.5, '/img/coke.png', '冰爽解腻');
+INSERT INTO `t_dish` VALUES (28, '雪碧', 5.00, '饮品', 4.5, '/img/coke.png', '清爽气泡');
+INSERT INTO `t_dish` VALUES (29, '米饭', 2.00, '主食', 4.6, '/img/coke.png', '香软可口');
+INSERT INTO `t_dish` VALUES (30, '馒头', 2.00, '主食', 4.2, '/img/coke.png', '松软好吃');
+INSERT INTO `t_dish` VALUES (31, '拍黄瓜', 10.00, '凉菜', 4.4, '/img/coke.png', '清爽解腻');
+INSERT INTO `t_dish` VALUES (32, '凉拌木耳', 12.00, '凉菜', 4.5, '/img/coke.png', '爽脆开胃');
 
 -- ----------------------------
--- Table structure for dish
+-- Table structure for t_order
 -- ----------------------------
-DROP TABLE IF EXISTS `dish`;
-CREATE TABLE `dish`  (
-  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
-  `category_id` bigint UNSIGNED NULL DEFAULT NULL,
-  `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `description` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `price_cents` int NOT NULL,
-  `image_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `is_on_sale` tinyint(1) NOT NULL DEFAULT 1,
-  `stock` int NULL DEFAULT NULL,
-  `rating_avg` decimal(3, 2) NOT NULL DEFAULT 0.00,
-  `rating_count` int NOT NULL DEFAULT 0,
-  `good_rate` decimal(5, 2) NOT NULL DEFAULT 0.00,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_dish_category_sale`(`category_id` ASC, `is_on_sale` ASC) USING BTREE,
-  INDEX `idx_dish_name`(`name` ASC) USING BTREE,
-  CONSTRAINT `fk_dish_category` FOREIGN KEY (`category_id`) REFERENCES `dish_category` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `dish_chk_1` CHECK (`price_cents` >= 0)
-) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+DROP TABLE IF EXISTS `t_order`;
+CREATE TABLE `t_order`  (
+  `order_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `total_amount` decimal(10, 2) NULL DEFAULT NULL,
+  `create_time` datetime NULL DEFAULT NULL,
+  `comment` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  PRIMARY KEY (`order_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Records of dish
+-- Records of t_order
 -- ----------------------------
-INSERT INTO `dish` VALUES (1, 1, '宫保鸡丁', '经典川味，微辣', 3200, 'images/gongbao.jpg', 1, NULL, 0.00, 0, 0.00, '2025-12-28 10:10:30', '2025-12-28 10:10:30');
-INSERT INTO `dish` VALUES (2, 1, '鱼香肉丝', '酸甜开胃', 2800, 'images/yuxiang.jpg', 1, NULL, 0.00, 0, 0.00, '2025-12-28 10:10:30', '2025-12-28 10:10:30');
-INSERT INTO `dish` VALUES (3, 2, '拍黄瓜', '清爽解腻', 1200, 'images/huanggua.jpg', 1, NULL, 0.00, 0, 0.00, '2025-12-28 10:10:30', '2025-12-28 10:10:30');
-INSERT INTO `dish` VALUES (4, 3, '米饭', '单份', 200, 'images/rice.jpg', 1, NULL, 0.00, 0, 0.00, '2025-12-28 10:10:30', '2025-12-28 10:10:30');
-INSERT INTO `dish` VALUES (5, 4, '可乐', '冰', 600, 'images/cola.jpg', 1, NULL, 0.00, 0, 0.00, '2025-12-28 10:10:30', '2025-12-28 10:10:30');
+INSERT INTO `t_order` VALUES (1, 2, 88.00, '2025-01-03 12:45:30', '味道很好，下次还来');
+INSERT INTO `t_order` VALUES (2, 3, 56.00, '2025-01-05 18:20:10', '');
+INSERT INTO `t_order` VALUES (3, 2, 64.00, '2025-01-06 19:05:00', '速度快');
+INSERT INTO `t_order` VALUES (4, 4, 38.00, '2025-01-07 11:30:15', '');
+INSERT INTO `t_order` VALUES (5, 5, 102.00, '2025-01-08 20:10:05', '鱼很鲜');
+INSERT INTO `t_order` VALUES (6, 6, 34.00, '2025-01-09 13:15:40', '');
+INSERT INTO `t_order` VALUES (7, 2, 53.00, '2025-01-10 12:00:00', '速度快');
+INSERT INTO `t_order` VALUES (8, 3, 70.00, '2025-01-11 18:40:20', '');
+INSERT INTO `t_order` VALUES (9, 4, 28.00, '2025-01-12 09:50:10', '');
+INSERT INTO `t_order` VALUES (10, 5, 94.00, '2025-01-13 21:05:55', '下次再点');
 
 -- ----------------------------
--- Table structure for dish_category
+-- Table structure for t_order_dish
 -- ----------------------------
-DROP TABLE IF EXISTS `dish_category`;
-CREATE TABLE `dish_category`  (
-  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
-  `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `sort_order` int NOT NULL DEFAULT 0,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `name`(`name` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+DROP TABLE IF EXISTS `t_order_dish`;
+CREATE TABLE `t_order_dish`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `order_id` int NOT NULL,
+  `dish_id` int NOT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 27 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Records of dish_category
+-- Records of t_order_dish
 -- ----------------------------
-INSERT INTO `dish_category` VALUES (1, '热菜', 1, '2025-12-28 10:10:30', '2025-12-28 10:10:30');
-INSERT INTO `dish_category` VALUES (2, '凉菜', 2, '2025-12-28 10:10:30', '2025-12-28 10:10:30');
-INSERT INTO `dish_category` VALUES (3, '主食', 3, '2025-12-28 10:10:30', '2025-12-28 10:10:30');
-INSERT INTO `dish_category` VALUES (4, '饮品', 4, '2025-12-28 10:10:30', '2025-12-28 10:10:30');
+INSERT INTO `t_order_dish` VALUES (1, 1, 1);
+INSERT INTO `t_order_dish` VALUES (2, 1, 1);
+INSERT INTO `t_order_dish` VALUES (3, 1, 3);
+INSERT INTO `t_order_dish` VALUES (4, 2, 2);
+INSERT INTO `t_order_dish` VALUES (5, 2, 18);
+INSERT INTO `t_order_dish` VALUES (6, 2, 29);
+INSERT INTO `t_order_dish` VALUES (7, 3, 22);
+INSERT INTO `t_order_dish` VALUES (8, 3, 23);
+INSERT INTO `t_order_dish` VALUES (9, 3, 25);
+INSERT INTO `t_order_dish` VALUES (10, 3, 31);
+INSERT INTO `t_order_dish` VALUES (11, 3, 27);
+INSERT INTO `t_order_dish` VALUES (12, 3, 29);
+INSERT INTO `t_order_dish` VALUES (13, 4, 7);
+INSERT INTO `t_order_dish` VALUES (14, 5, 8);
+INSERT INTO `t_order_dish` VALUES (15, 5, 9);
+INSERT INTO `t_order_dish` VALUES (16, 5, 29);
+INSERT INTO `t_order_dish` VALUES (17, 6, 13);
+INSERT INTO `t_order_dish` VALUES (18, 7, 19);
+INSERT INTO `t_order_dish` VALUES (19, 7, 21);
+INSERT INTO `t_order_dish` VALUES (20, 7, 27);
+INSERT INTO `t_order_dish` VALUES (21, 7, 29);
+INSERT INTO `t_order_dish` VALUES (22, 8, 10);
+INSERT INTO `t_order_dish` VALUES (23, 8, 15);
+INSERT INTO `t_order_dish` VALUES (24, 9, 1);
+INSERT INTO `t_order_dish` VALUES (25, 10, 10);
+INSERT INTO `t_order_dish` VALUES (26, 10, 8);
 
 -- ----------------------------
--- Table structure for order_item
+-- Table structure for t_user
 -- ----------------------------
-DROP TABLE IF EXISTS `order_item`;
-CREATE TABLE `order_item`  (
-  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
-  `order_id` bigint UNSIGNED NOT NULL,
-  `dish_id` bigint UNSIGNED NULL DEFAULT NULL,
-  `dish_name_snapshot` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `unit_price_cents_snapshot` int NOT NULL,
-  `qty` int NOT NULL,
-  `item_remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_order_item_order`(`order_id` ASC) USING BTREE,
-  INDEX `idx_order_item_dish`(`dish_id` ASC) USING BTREE,
-  CONSTRAINT `fk_item_dish` FOREIGN KEY (`dish_id`) REFERENCES `dish` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_item_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `order_item_chk_1` CHECK (`unit_price_cents_snapshot` >= 0),
-  CONSTRAINT `order_item_chk_2` CHECK (`qty` > 0)
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+DROP TABLE IF EXISTS `t_user`;
+CREATE TABLE `t_user`  (
+  `user_id` int NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `password` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `register_time` datetime NULL DEFAULT NULL,
+  PRIMARY KEY (`user_id`) USING BTREE,
+  UNIQUE INDEX `uk_user_username`(`username` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Records of order_item
+-- Records of t_user
 -- ----------------------------
-
--- ----------------------------
--- Table structure for orders
--- ----------------------------
-DROP TABLE IF EXISTS `orders`;
-CREATE TABLE `orders`  (
-  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
-  `order_no` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `table_no` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `status` enum('CREATED','PAID','ACCEPTED','COOKING','SERVED','DONE','CANCELLED') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'CREATED',
-  `total_price_cents` int NOT NULL DEFAULT 0,
-  `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `paid_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `order_no`(`order_no` ASC) USING BTREE,
-  INDEX `idx_orders_table_status_time`(`table_no` ASC, `status` ASC, `created_at` ASC) USING BTREE,
-  INDEX `idx_orders_created_at`(`created_at` ASC) USING BTREE,
-  CONSTRAINT `orders_chk_1` CHECK (`total_price_cents` >= 0)
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Records of orders
--- ----------------------------
-
--- ----------------------------
--- Table structure for review
--- ----------------------------
-DROP TABLE IF EXISTS `review`;
-CREATE TABLE `review`  (
-  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
-  `order_id` bigint UNSIGNED NOT NULL,
-  `rating` tinyint UNSIGNED NOT NULL,
-  `content` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `uk_review_order`(`order_id` ASC) USING BTREE,
-  INDEX `idx_review_time`(`created_at` ASC) USING BTREE,
-  CONSTRAINT `fk_review_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `review_chk_1` CHECK (`rating` between 1 and 5)
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Records of review
--- ----------------------------
-
--- ----------------------------
--- Table structure for review_item
--- ----------------------------
-DROP TABLE IF EXISTS `review_item`;
-CREATE TABLE `review_item`  (
-  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
-  `review_id` bigint UNSIGNED NOT NULL,
-  `dish_id` bigint UNSIGNED NULL DEFAULT NULL,
-  `rating` tinyint UNSIGNED NOT NULL,
-  `content` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  PRIMARY KEY (`id`) USING BTREE,
-  INDEX `fk_review_item_review`(`review_id` ASC) USING BTREE,
-  INDEX `idx_review_item_dish`(`dish_id` ASC) USING BTREE,
-  CONSTRAINT `fk_review_item_dish` FOREIGN KEY (`dish_id`) REFERENCES `dish` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_review_item_review` FOREIGN KEY (`review_id`) REFERENCES `review` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `review_item_chk_1` CHECK (`rating` between 1 and 5)
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Records of review_item
--- ----------------------------
-
--- ----------------------------
--- Table structure for service_call
--- ----------------------------
-DROP TABLE IF EXISTS `service_call`;
-CREATE TABLE `service_call`  (
-  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
-  `table_no` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `call_type` enum('WATER','CUTLERY','PAY','HELP','OTHER') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'OTHER',
-  `content` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `status` enum('OPEN','ACKED','DONE','CANCELLED') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'OPEN',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `handled_at` timestamp NULL DEFAULT NULL,
-  `handler_note` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_call_status_time`(`status` ASC, `created_at` ASC) USING BTREE,
-  INDEX `idx_call_table_time`(`table_no` ASC, `created_at` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Records of service_call
--- ----------------------------
-
--- ----------------------------
--- View structure for v_daily_sales
--- ----------------------------
-DROP VIEW IF EXISTS `v_daily_sales`;
-CREATE ALGORITHM = UNDEFINED SQL SECURITY DEFINER VIEW `v_daily_sales` AS select cast(`o`.`created_at` as date) AS `day`,count(0) AS `order_count`,sum(`o`.`total_price_cents`) AS `total_cents` from `orders` `o` where (`o`.`status` in ('PAID','ACCEPTED','COOKING','SERVED','DONE')) group by cast(`o`.`created_at` as date);
-
--- ----------------------------
--- View structure for v_order_detail
--- ----------------------------
-DROP VIEW IF EXISTS `v_order_detail`;
-CREATE ALGORITHM = UNDEFINED SQL SECURITY DEFINER VIEW `v_order_detail` AS select `o`.`id` AS `order_id`,`o`.`order_no` AS `order_no`,`o`.`table_no` AS `table_no`,`o`.`status` AS `status`,`o`.`total_price_cents` AS `total_price_cents`,`o`.`created_at` AS `created_at`,`i`.`id` AS `item_id`,`i`.`dish_id` AS `dish_id`,`i`.`dish_name_snapshot` AS `dish_name_snapshot`,`i`.`unit_price_cents_snapshot` AS `unit_price_cents_snapshot`,`i`.`qty` AS `qty`,`i`.`item_remark` AS `item_remark` from (`orders` `o` join `order_item` `i` on((`i`.`order_id` = `o`.`id`)));
-
--- ----------------------------
--- View structure for v_order_list
--- ----------------------------
-DROP VIEW IF EXISTS `v_order_list`;
-CREATE ALGORITHM = UNDEFINED SQL SECURITY DEFINER VIEW `v_order_list` AS select `o`.`id` AS `id`,`o`.`order_no` AS `order_no`,`o`.`table_no` AS `table_no`,`o`.`status` AS `status`,`o`.`total_price_cents` AS `total_price_cents`,`o`.`created_at` AS `created_at`,`o`.`paid_at` AS `paid_at` from `orders` `o`;
-
--- ----------------------------
--- Triggers structure for table order_item
--- ----------------------------
-DROP TRIGGER IF EXISTS `trg_order_item_after_insert`;
-delimiter ;;
-CREATE TRIGGER `trg_order_item_after_insert` AFTER INSERT ON `order_item` FOR EACH ROW BEGIN
-  UPDATE orders
-  SET total_price_cents = (
-    SELECT COALESCE(SUM(unit_price_cents_snapshot * qty), 0)
-    FROM order_item
-    WHERE order_id = NEW.order_id
-  )
-  WHERE id = NEW.order_id;
-END
-;;
-delimiter ;
-
--- ----------------------------
--- Triggers structure for table order_item
--- ----------------------------
-DROP TRIGGER IF EXISTS `trg_order_item_after_update`;
-delimiter ;;
-CREATE TRIGGER `trg_order_item_after_update` AFTER UPDATE ON `order_item` FOR EACH ROW BEGIN
-  UPDATE orders
-  SET total_price_cents = (
-    SELECT COALESCE(SUM(unit_price_cents_snapshot * qty), 0)
-    FROM order_item
-    WHERE order_id = NEW.order_id
-  )
-  WHERE id = NEW.order_id;
-END
-;;
-delimiter ;
-
--- ----------------------------
--- Triggers structure for table order_item
--- ----------------------------
-DROP TRIGGER IF EXISTS `trg_order_item_after_delete`;
-delimiter ;;
-CREATE TRIGGER `trg_order_item_after_delete` AFTER DELETE ON `order_item` FOR EACH ROW BEGIN
-  UPDATE orders
-  SET total_price_cents = (
-    SELECT COALESCE(SUM(unit_price_cents_snapshot * qty), 0)
-    FROM order_item
-    WHERE order_id = OLD.order_id
-  )
-  WHERE id = OLD.order_id;
-END
-;;
-delimiter ;
-
--- ----------------------------
--- Triggers structure for table review_item
--- ----------------------------
-DROP TRIGGER IF EXISTS `trg_review_item_after_insert`;
-delimiter ;;
-CREATE TRIGGER `trg_review_item_after_insert` AFTER INSERT ON `review_item` FOR EACH ROW BEGIN
-  IF NEW.dish_id IS NOT NULL THEN
-    UPDATE dish d
-    JOIN (
-      SELECT
-        dish_id,
-        COUNT(*) AS cnt,
-        AVG(rating) AS avg_rating,
-        (SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) / COUNT(*)) * 100 AS good_rate_pct
-      FROM review_item
-      WHERE dish_id = NEW.dish_id
-      GROUP BY dish_id
-    ) s ON d.id = s.dish_id
-    SET d.rating_count = s.cnt,
-        d.rating_avg   = ROUND(s.avg_rating, 2),
-        d.good_rate    = ROUND(s.good_rate_pct, 2)
-    WHERE d.id = NEW.dish_id;
-  END IF;
-END
-;;
-delimiter ;
-
--- ----------------------------
--- Triggers structure for table review_item
--- ----------------------------
-DROP TRIGGER IF EXISTS `trg_review_item_after_update`;
-delimiter ;;
-CREATE TRIGGER `trg_review_item_after_update` AFTER UPDATE ON `review_item` FOR EACH ROW BEGIN
-  IF OLD.dish_id IS NOT NULL THEN
-    UPDATE dish d
-    LEFT JOIN (
-      SELECT
-        dish_id,
-        COUNT(*) AS cnt,
-        AVG(rating) AS avg_rating,
-        (SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) / COUNT(*)) * 100 AS good_rate_pct
-      FROM review_item
-      WHERE dish_id = OLD.dish_id
-      GROUP BY dish_id
-    ) s ON d.id = s.dish_id
-    SET d.rating_count = COALESCE(s.cnt, 0),
-        d.rating_avg   = COALESCE(ROUND(s.avg_rating, 2), 0.00),
-        d.good_rate    = COALESCE(ROUND(s.good_rate_pct, 2), 0.00)
-    WHERE d.id = OLD.dish_id;
-  END IF;
-
-  IF NEW.dish_id IS NOT NULL THEN
-    UPDATE dish d
-    JOIN (
-      SELECT
-        dish_id,
-        COUNT(*) AS cnt,
-        AVG(rating) AS avg_rating,
-        (SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) / COUNT(*)) * 100 AS good_rate_pct
-      FROM review_item
-      WHERE dish_id = NEW.dish_id
-      GROUP BY dish_id
-    ) s ON d.id = s.dish_id
-    SET d.rating_count = s.cnt,
-        d.rating_avg   = ROUND(s.avg_rating, 2),
-        d.good_rate    = ROUND(s.good_rate_pct, 2)
-    WHERE d.id = NEW.dish_id;
-  END IF;
-END
-;;
-delimiter ;
-
--- ----------------------------
--- Triggers structure for table review_item
--- ----------------------------
-DROP TRIGGER IF EXISTS `trg_review_item_after_delete`;
-delimiter ;;
-CREATE TRIGGER `trg_review_item_after_delete` AFTER DELETE ON `review_item` FOR EACH ROW BEGIN
-  IF OLD.dish_id IS NOT NULL THEN
-    UPDATE dish d
-    LEFT JOIN (
-      SELECT
-        dish_id,
-        COUNT(*) AS cnt,
-        AVG(rating) AS avg_rating,
-        (SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) / COUNT(*)) * 100 AS good_rate_pct
-      FROM review_item
-      WHERE dish_id = OLD.dish_id
-      GROUP BY dish_id
-    ) s ON d.id = s.dish_id
-    SET d.rating_count = COALESCE(s.cnt, 0),
-        d.rating_avg   = COALESCE(ROUND(s.avg_rating, 2), 0.00),
-        d.good_rate    = COALESCE(ROUND(s.good_rate_pct, 2), 0.00)
-    WHERE d.id = OLD.dish_id;
-  END IF;
-END
-;;
-delimiter ;
+INSERT INTO `t_user` VALUES (1, 'admin', 'admin123', '2025-01-01 09:00:00');
+INSERT INTO `t_user` VALUES (2, 'user1', 'user1123', '2025-01-02 10:05:00');
+INSERT INTO `t_user` VALUES (3, 'user2', 'user2123', '2025-01-03 11:10:00');
+INSERT INTO `t_user` VALUES (4, 'user3', 'user3123', '2025-01-04 12:20:00');
+INSERT INTO `t_user` VALUES (5, 'user4', 'user4123', '2025-01-05 13:35:00');
+INSERT INTO `t_user` VALUES (6, 'user5', 'user5123', '2025-01-06 14:50:00');
 
 SET FOREIGN_KEY_CHECKS = 1;
