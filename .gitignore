@@ -1,0 +1,38 @@
+# 二进制文件和大文件
+*.exe
+*.dll
+*.so
+*.dylib
+*.bin
+*.dat
+*.zip
+*.tar.gz
+*.7z
+
+# 编译产物
+build*/
+dist/
+*.o
+*.obj
+*.class
+
+# 系统文件
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE和编辑器配置
+.vscode/
+.idea/
+*.code-workspace
+**/*.user
+
+# 依赖目录（根据语言）
+node_modules/
+__pycache__/
+*.pyc
+
+# 个人测试文件
+test*
+temp_*
