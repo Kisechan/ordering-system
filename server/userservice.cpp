@@ -2,22 +2,19 @@
 
 #include <QCryptographicHash>
 
-UserService* UserService::userService = nullptr;
+UserService* UserService::userService = new UserService();
 
 UserService::UserService() {
 
 }
 
 UserService *UserService::getInstance() {
-    if (userService == nullptr) {
-        userService = new UserService();
-    }
     return userService;
 }
 
 QJsonObject UserService::login(QString username, QString password) {
     QJsonObject response;
-//    User user = userMapper.getByUserName(username);
+//    User user = UserMapper::getInstance().getByUserName(username);
 
 //    if (!user.isValid()) {
 //        response["code"] = 402;
@@ -39,5 +36,20 @@ QJsonObject UserService::login(QString username, QString password) {
 //    QJsonObject data;
 //    data["user_id"] = user.getUserId();
 //    response["data"] = data;
+    return response;
+}
+
+QJsonObject UserService::registerAccount(QString username, QString password) {
+    QJsonObject response;
+
+//    User probUser = UserMapper::getInstance().getByUserName(username);
+//    if (proUser.isValid()) {
+//        response["code"] = 402;
+//        response["msg"] = "该用户名已被占用！";
+//        return response;
+//    }
+
+
+
     return response;
 }

@@ -3,16 +3,13 @@
 #include <QJsonArray>
 #include <QJsonValue>
 
-Server* Server::server = nullptr;
+Server* Server::server = new Server();
 
 Server::Server(QObject* parent)
     : QTcpServer(parent) {
 }
 
 Server* Server::getInstance() {
-    if (server == nullptr) {
-        server = new Server();
-    }
     return server;
 }
 

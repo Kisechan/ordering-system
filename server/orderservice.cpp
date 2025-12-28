@@ -1,15 +1,12 @@
 #include "orderservice.h"
 
-OrderService* OrderService::orderService = nullptr;
+OrderService* OrderService::orderService = new OrderService();
 
 OrderService::OrderService() {
 
 }
 
 OrderService *OrderService::getInstance() {
-    if (orderService == nullptr) {
-        orderService = new OrderService();
-    }
     return orderService;
 }
 

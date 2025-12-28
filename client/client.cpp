@@ -3,7 +3,7 @@
 #include <QDebug>
 #include <QtGlobal>
 
-Client* Client::client = nullptr;
+Client* Client::client = new Client();
 
 Client::Client(QObject *parent) : QObject(parent)
 {
@@ -17,9 +17,6 @@ Client::Client(QObject *parent) : QObject(parent)
 }
 
 Client* Client::getInstance() {
-    if (client == nullptr) {
-        client = new Client();
-    }
     return client;
 }
 

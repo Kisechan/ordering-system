@@ -1,15 +1,12 @@
 #include "dishservice.h"
 
-DishService* DishService::dishService = nullptr;
+DishService* DishService::dishService = new DishService();
 
 DishService::DishService() {
 
 }
 
 DishService *DishService::getInstance() {
-    if (dishService == nullptr) {
-        dishService = new DishService();
-    }
     return dishService;
 }
 
