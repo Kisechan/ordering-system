@@ -1,5 +1,8 @@
 #include "server.h"
 
+#include <QJsonArray>
+#include <QJsonValue>
+
 Server* Server::server = nullptr;
 
 Server::Server(QObject* parent)
@@ -82,17 +85,35 @@ void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
 
         // TODO: 如果登录成功，记录到 userMap
     } else if (type == "register") {
+        QString username = request["username"].toString();
+        QString password = request["password"].toString();
+
         // TODO: 获取注册响应结果
     } else if (type == "dish_list") {
         // TODO: 获取菜品详细信息
     } else if (type == "call_waiter") {
-        // TODO: 发送呼叫服务员信号
+        // 发送呼叫服务员信号
+        QString username = userMap[socket].username;
+        emit callWaiter(username);
     } else if (type == "order_submit") {
+        int userId = userMap[socket].userId;
+        QJsonObject dataObj = request["data"].toObject();
+        QJsonArray dishesArray = dataObj["dishes"].toArray();
+
+        QList<int> dishIdList, countList;
+        for (const QJsonValue& v : dishesArray) {
+            QJsonObject dishObj = v.toObject();
+            dishIdList.append(dishObj["dish_id"].toInt());
+            countList.append(dishObj["count"].toInt());
+        }
+
         // TODO: 获取订单提交结果
     } else if (type == "order_list") {
+        int uid = userMap[socket].userId;
         // TODO: 获取订单详细信息
     } else if (type == "order_comment") {
-        // TODO: 获取历史订单详细信息
+        int uid = userMap[socket].userId;
+        // TODO: 获取提交评论结果
     } else {
         response["code"] = 401;
         response["msg"] = "未知的请求!";

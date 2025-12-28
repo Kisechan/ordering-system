@@ -28,11 +28,18 @@ CONFIG += c++17
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    server.cpp
+    server.cpp \
+    userservice.cpp \
+    orderservice.cpp \
+    dishservice.cpp
 
 HEADERS += \
         mainwindow.h \
-    server.h
+    server.h \
+    dishservice.h \
+    orderservice.h \
+    userservice.h \
+    orderservice.h
 
 FORMS += \
         mainwindow.ui
