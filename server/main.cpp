@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 #include <QApplication>
+#include "ElaPushButton.h"
+#include "ElaLineEdit.h"
 
 #include "server.h"
 
