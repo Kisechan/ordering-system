@@ -26,11 +26,20 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++17
 
 SOURCES += \
-        main.cpp \
-        mainwindow.cpp
+    main.cpp \
+    mainwindow.cpp \
+    networks/Protocol.cpp \
+    networks/ResponseParser.cpp \
+    networks/TcpClient.cpp \
+    networks/NetworkManager.cpp
 
 HEADERS += \
-        mainwindow.h
+    mainwindow.h \
+    networks/NetworkConfig.h \
+    networks/Protocol.h \
+    networks/ResponseParser.h \
+    networks/TcpClient.h \
+    networks/NetworkManager.h
 
 FORMS += \
         mainwindow.ui
