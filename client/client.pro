@@ -24,12 +24,89 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 CONFIG += c++11
 
+# 1) 头文件路径
+INCLUDEPATH += $$PWD/ThirdParty/include
+
+# 2) 链接导入库（MinGW 用 .dll.a）
+win32-g++:LIBS += $$PWD/ThirdParty/lib/libElaWidgetTools.dll.a
+
+# 3) 运行时把 DLL 拷贝到 exe 同目录（Qt Creator shadow build 也能用）
+win32: QMAKE_POST_LINK += $$quote(cmd /c copy /y $$shell_path($$PWD/ThirdParty/bin/ElaWidgetTools.dll) $$shell_path($$OUT_PWD))
+
 SOURCES += \
         main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
 
 HEADERS += \
-        mainwindow.h
+        mainwindow.h \
+    ThirdParty/include/Def.h \
+    ThirdParty/include/ElaAcrylicUrlCard.h \
+    ThirdParty/include/ElaAppBar.h \
+    ThirdParty/include/ElaApplication.h \
+    ThirdParty/include/ElaBreadcrumbBar.h \
+    ThirdParty/include/ElaCalendar.h \
+    ThirdParty/include/ElaCalendarPicker.h \
+    ThirdParty/include/ElaCheckBox.h \
+    ThirdParty/include/ElaColorDialog.h \
+    ThirdParty/include/ElaComboBox.h \
+    ThirdParty/include/ElaContentDialog.h \
+    ThirdParty/include/ElaDockWidget.h \
+    ThirdParty/include/ElaDoubleSpinBox.h \
+    ThirdParty/include/ElaDxgiManager.h \
+    ThirdParty/include/ElaEventBus.h \
+    ThirdParty/include/ElaExponentialBlur.h \
+    ThirdParty/include/ElaFlowLayout.h \
+    ThirdParty/include/ElaGraphicsItem.h \
+    ThirdParty/include/ElaGraphicsLineItem.h \
+    ThirdParty/include/ElaGraphicsScene.h \
+    ThirdParty/include/ElaGraphicsView.h \
+    ThirdParty/include/ElaIcon.h \
+    ThirdParty/include/ElaIconButton.h \
+    ThirdParty/include/ElaImageCard.h \
+    ThirdParty/include/ElaInteractiveCard.h \
+    ThirdParty/include/ElaKeyBinder.h \
+    ThirdParty/include/ElaLineEdit.h \
+    ThirdParty/include/ElaListView.h \
+    ThirdParty/include/ElaLog.h \
+    ThirdParty/include/ElaMenu.h \
+    ThirdParty/include/ElaMenuBar.h \
+    ThirdParty/include/ElaMessageBar.h \
+    ThirdParty/include/ElaMessageButton.h \
+    ThirdParty/include/ElaMultiSelectComboBox.h \
+    ThirdParty/include/ElaNavigationBar.h \
+    ThirdParty/include/ElaNavigationRouter.h \
+    ThirdParty/include/ElaPivot.h \
+    ThirdParty/include/ElaPlainTextEdit.h \
+    ThirdParty/include/ElaPopularCard.h \
+    ThirdParty/include/ElaProgressBar.h \
+    ThirdParty/include/ElaPromotionCard.h \
+    ThirdParty/include/ElaPromotionView.h \
+    ThirdParty/include/ElaPushButton.h \
+    ThirdParty/include/ElaRadioButton.h \
+    ThirdParty/include/ElaReminderCard.h \
+    ThirdParty/include/ElaScrollArea.h \
+    ThirdParty/include/ElaScrollBar.h \
+    ThirdParty/include/ElaScrollPage.h \
+    ThirdParty/include/ElaScrollPageArea.h \
+    ThirdParty/include/ElaSlider.h \
+    ThirdParty/include/ElaSpinBox.h \
+    ThirdParty/include/ElaStatusBar.h \
+    ThirdParty/include/ElaSuggestBox.h \
+    ThirdParty/include/ElaTabBar.h \
+    ThirdParty/include/ElaTableView.h \
+    ThirdParty/include/ElaTabWidget.h \
+    ThirdParty/include/ElaText.h \
+    ThirdParty/include/ElaTheme.h \
+    ThirdParty/include/ElaToggleButton.h \
+    ThirdParty/include/ElaToggleSwitch.h \
+    ThirdParty/include/ElaToolBar.h \
+    ThirdParty/include/ElaToolButton.h \
+    ThirdParty/include/ElaToolTip.h \
+    ThirdParty/include/ElaTreeView.h \
+    ThirdParty/include/ElaWidget.h \
+    ThirdParty/include/ElaWindow.h \
+    ThirdParty/include/singleton.h \
+    ThirdParty/include/stdafx.h \
 
 FORMS += \
         mainwindow.ui
@@ -38,3 +115,12 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+    ThirdParty/include/ElaWidgetTools.qrc
+
+DISTFILES += \
+    ThirdParty/lib/libElaWidgetTools.dll.a \
+    ThirdParty/bin/ElaWidgetTools.dll \
+    ThirdParty/lib/cmake/ElaWidgetToolsConfig.cmake \
+    ThirdParty/lib/cmake/ElaWidgetToolsConfigVersion.cmake

@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 #include <QApplication>
+#include "ElaApplication.h"
+#include "ElaAppBar.h"
 
 int main(int argc, char *argv[])
 {
