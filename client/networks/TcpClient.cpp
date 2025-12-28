@@ -1,24 +1,62 @@
 #include "TcpClient.h"
+#include "NetworkConfig.h"
 #include <QJsonDocument>
 #include <QDateTime>
 
 TcpClient::TcpClient(QObject* parent)
-    : QObject(parent), m_socket(new QTcpSocket(this)) {
+    : QObject(parent), 
+      m_socket(new QTcpSocket(this)),
+      m_timeoutTimer(new QTimer(this)),
+      m_isConnecting(false) {
 
-    // Connect QTcpSocket signals to TcpClient slots
+    // 连接 QTcpSocket 信号到 TcpClient 槽函数
     connect(m_socket, &QTcpSocket::readyRead, this, &TcpClient::onReadyRead);
     connect(m_socket, &QTcpSocket::connected, this, &TcpClient::onConnected);
     connect(m_socket, &QTcpSocket::disconnected, this, &TcpClient::onDisconnected);
+    connect(m_socket, QOverload<QAbstractSocket::SocketError>::of(&QTcpSocket::error),
+            this, &TcpClient::onSocketError);
+
+    // 连接超时定时器
+    connect(m_timeoutTimer, &QTimer::timeout, this, &TcpClient::onConnectionTimeout);
+    m_timeoutTimer->setSingleShot(true);
 }
 
-void TcpClient::connectToServer(const QString& ip, quint16 port) {
+TcpClient::~TcpClient() {
+    if (m_socket && m_socket->state() == QTcpSocket::ConnectedState) {
+        m_socket->disconnectFromHost();
+    }
+}
+
+void TcpClient::connectToServer(const QString& ip, quint16 port, int timeoutMs) {
+    if (m_socket->state() == QTcpSocket::ConnectedState) {
+        return; // 已连接
+    }
+
+    m_isConnecting = true;
+    m_timeoutTimer->start(timeoutMs);
     m_socket->connectToHost(ip, port);
 }
 
 void TcpClient::sendJson(const QJsonObject& json) {
+    if (m_socket->state() != QTcpSocket::ConnectedState) {
+        emit connectionError("未连接到服务器");
+        return;
+    }
+
     QJsonDocument doc(json);
     QByteArray data = doc.toJson(QJsonDocument::Compact);
     m_socket->write(data);
+}
+
+bool TcpClient::isConnected() const {
+    return m_socket->state() == QTcpSocket::ConnectedState;
+}
+
+void TcpClient::disconnectFromServer() {
+    m_timeoutTimer->stop();
+    if (m_socket->state() != QTcpSocket::UnconnectedState) {
+        m_socket->disconnectFromHost();
+    }
 }
 
 void TcpClient::onReadyRead() {
@@ -75,9 +113,25 @@ void TcpClient::onReadyRead() {
 }
 
 void TcpClient::onConnected() {
+    m_isConnecting = false;
+    m_timeoutTimer->stop();
     emit connected();
 }
 
 void TcpClient::onDisconnected() {
+    m_isConnecting = false;
+    m_timeoutTimer->stop();
     emit disconnected();
+}
+
+void TcpClient::onConnectionTimeout() {
+    if (m_isConnecting) {
+        m_socket->abort();
+        emit connectionError("连接超时");
+    }
+}
+
+void TcpClient::onSocketError() {
+    QString errorMsg = m_socket->errorString();
+    emit connectionError(errorMsg);
 }
