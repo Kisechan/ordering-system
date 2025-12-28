@@ -7,7 +7,6 @@
 QT += core gui
 QT += core gui network
 QT += widgets
-QT       += network
 
 
 TARGET = client
