@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QCloseEvent>
 
 namespace Ui {
 class MainWindow;
@@ -17,6 +18,8 @@ public:
 
 private:
     Ui::MainWindow *ui;
+
+    void closeEvent(QCloseEvent *event);
 };
 
 #endif // MAINWINDOW_H

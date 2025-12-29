@@ -3,9 +3,20 @@
 #include "logindialog.h"
 #include "clientmainwindow.h"
 
+#include "client.h"
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    MainWindow w;
+    w.show();
+
+    Client* client = Client::getInstance();
+    client->connectToServer("127.0.0.1", 5523);
+    QObject::connect(&a, &QApplication::aboutToQuit, [](){
+        Client::destroyInstance();
+    });
+
     eApp->init();
 
     QFont f = qApp->font();
