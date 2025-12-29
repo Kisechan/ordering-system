@@ -22,12 +22,16 @@ public:
     void setDishList(const QList<Dish>& dishes);
 
 signals:
-    void searchRequested(const QString& keyword);
+    void searchRequested(const QString& keyword); // 查询
+    void dishUpdated(const Dish& dish);     // 菜品被修改
+    void dishDeleted(int dishId);           // 菜品被删除
 
 private slots:
     void onSearchTextChanged(const QString& text);
     void onSearchReturnPressed();
     void applyFilterNow();
+    void onEditDish(int dishId);
+    void onDeleteDish(int dishId);
 
 private:
     void rebuildList(const QList<Dish>& dishes);
