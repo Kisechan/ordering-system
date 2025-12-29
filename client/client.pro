@@ -39,7 +39,8 @@ SOURCES += \
     placeholderpage.cpp \
     Protocol.cpp \
     registerdialog.cpp \
-    ResponseParser.cpp
+    ResponseParser.cpp \
+    cartmanager.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -53,7 +54,9 @@ HEADERS += \
     placeholderpage.h \
     Protocol.h \
     registerdialog.h \
-    ResponseParser.h
+    ResponseParser.h \
+    cartmanager.h \
+    carttype.h
 
 FORMS += \
     mainwindow.ui

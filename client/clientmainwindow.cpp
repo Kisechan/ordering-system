@@ -1,7 +1,7 @@
 #include "clientmainwindow.h"
 
 #include <QPixmap>
-
+#include <QDebug>
 #include "Def.h"
 #include "homepage.h"
 #include "placeholderpage.h"
@@ -35,9 +35,16 @@ ClientMainWindow::ClientMainWindow(QWidget* parent)
         }
     }
 
-    // 右侧主页：先做一个“可滚动壳子”
-    auto* home = new HomePage(this);
-    addPageNode(QStringLiteral("点餐"), home, ElaIconType::House);
+    // 右侧主页：可滚动菜品展示
+    m_cart = new CartManager(this);
+    m_home = new HomePage(this);
+    addPageNode(QStringLiteral("点餐"), m_home, ElaIconType::House);
+
+    connect(m_home, &HomePage::addToCartRequested,
+            m_cart, [this](const Dish& dish, int qty) {
+                m_cart->addDish(dish, qty);
+            });
+
 
     // 其它页面先占位
     addPageNode(QStringLiteral("购物车"),

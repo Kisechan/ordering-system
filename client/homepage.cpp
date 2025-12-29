@@ -132,9 +132,8 @@ void HomePage::rebuildList(const QList<Dish>& dishes)
         card->setDish(d);
 
         connect(card, &DishCard::addToCartRequested, this,
-                [](int dishId, int qty) {
-                    // TODO: 后端购物车接口
-                    qDebug("addToCartRequested dishId=%d qty=%d", dishId, qty);
+                [this, d](int /*dishId*/, int qty) {
+                    emit addToCartRequested(d, qty);
                 });
 
         m_listLayout->addWidget(card);
