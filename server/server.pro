@@ -26,14 +26,23 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 CONFIG += c++17
 
+INCLUDEPATH += $$PWD/ThirdParty/include
+
+win32-g++:LIBS += $$PWD/ThirdParty/lib/libElaWidgetTools.dll.a
+
+win32: QMAKE_POST_LINK += $$quote(cmd /c copy /y $$shell_path($$PWD/ThirdParty/bin/ElaWidgetTools.dll) $$shell_path($$OUT_PWD))
+
+
 SOURCES += \
-    main.cpp \
-    mainwindow.cpp \
-    server.cpp
+        main.cpp \
+        mainwindow.cpp \
+        orderinfo_page.cpp \
+        server.cpp
 
 HEADERS += \
-    mainwindow.h \
-    server.h
+        mainwindow.h \
+        orderinfo_page.h \
+        server.h
 
 FORMS += \
     mainwindow.ui
@@ -42,6 +51,20 @@ FORMS += \
 include(../database/db/db.pri)
 
 # Default rules for deployment.
+qnx: target.path = /tmp/$${TARGET}/bin
+else: unix:!android: target.path = /opt/$${TARGET}/bin
+!isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+    ThirdParty/include/ElaWidgetTools.qrc
+
+OTHER_FILES += \
+    $$files($$PWD/ThirdParty/include/*.h, true) \
+    $$PWD/ThirdParty/lib/libElaWidgetTools.dll.a \
+    $$PWD/ThirdParty/bin/ElaWidgetTools.dll \
+    $$PWD/ThirdParty/lib/cmake/ElaWidgetToolsConfig.cmake \
+    $$PWD/ThirdParty/lib/cmake/ElaWidgetToolsConfigVersion.cmake
+
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target

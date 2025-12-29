@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 #include <QApplication>
+#include "ElaApplication.h"
+
 
 #include "server.h"
 
@@ -8,11 +10,10 @@
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
 
-    MainWindow w;
-    w.show();
+    //Server* server = Server::getInstance();
+    //server->start(5523);
 
-    Server* server = Server::getInstance();
-    server->start(5523);
+    eApp->init();
 
     db::DbConfig cfg;
     cfg.odbcConnStr =
@@ -32,3 +33,5 @@ int main(int argc, char *argv[]) {
 
     return a.exec();
 }
+
+
