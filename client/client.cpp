@@ -45,14 +45,26 @@ void Client::sendJson(const QJsonObject &obj) {
     emit logMessage(QString("Sent JSON: %1").arg(QString(data)));
 }
 
+bool Client::isConnected() const {
+    return socket->state() == QTcpSocket::ConnectedState;
+}
+
+void Client::disconnectFromServer() {
+    if (socket->state() != QTcpSocket::UnconnectedState) {
+        socket->disconnectFromHost();
+    }
+}
+
 // 连接成功
 void Client::onConnected() {
     emit logMessage("Connected to server");
+    emit connected();
 }
 
 // 断开连接
 void Client::onDisconnected() {
     emit logMessage("Disconnected from server");
+    emit disconnected();
 }
 
 // 接收数据
@@ -75,4 +87,5 @@ void Client::onReadyRead() {
 void Client::onErrorOccurred(QAbstractSocket::SocketError socketError) {
     Q_UNUSED(socketError);
     emit logMessage(QString("Socket error: %1").arg(socket->errorString()));
+    emit connectionError(socket->errorString());
 }

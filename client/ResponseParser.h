@@ -10,9 +10,9 @@ namespace ResponseParser {
     // 响应码枚举
     enum ResponseCode {
         SUCCESS = 200,              // 请求成功
-        PASSWORD_ERROR = 301,       // 密码错误
-        USER_NOT_FOUND = 302,       // 用户不存在
-        INVALID_PASSWORD_FORMAT = 303, // 密码格式不合法
+        PASSWORD_ERROR = 401,       // 密码错误
+        USER_NOT_FOUND = 402,       // 用户不存在
+        INVALID_PASSWORD_FORMAT = 402, // 密码格式不合法
         UNKNOWN_ERROR = 999         // 未知错误
     };
 

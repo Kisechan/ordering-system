@@ -4,99 +4,68 @@
 
 NetworkManager::NetworkManager(QObject* parent)
     : QObject(parent), 
-      m_tcpClient(new TcpClient(this)),
+      m_client(Client::getInstance()),
       m_lastRequestType("") {
 
-    // 连接 TcpClient 信号
-    connect(m_tcpClient, &TcpClient::connected, this, &NetworkManager::connected);
-    connect(m_tcpClient, &TcpClient::disconnected, this, &NetworkManager::disconnected);
-    connect(m_tcpClient, &TcpClient::jsonReceived, this, &NetworkManager::onJsonReceived);
-    connect(m_tcpClient, &TcpClient::connectionError, this, &NetworkManager::onConnectionError);
+    // 连接 Client 信号
+    connect(m_client, &Client::receivedJson, this, &NetworkManager::onJsonReceived);
 }
 
 NetworkManager::~NetworkManager() {
 }
 
 void NetworkManager::connectToServer(const QString& ip, quint16 port) {
-    m_tcpClient->connectToServer(ip, port, NetworkConfig::TCP_TIMEOUT_MS);
+    m_client->connectToServer(ip, port);
 }
 
 void NetworkManager::disconnectFromServer() {
-    m_tcpClient->disconnectFromServer();
+    m_client->disconnectFromServer();
 }
 
 bool NetworkManager::isConnected() const {
-    return m_tcpClient->isConnected();
+    return m_client->isConnected();
 }
 
 void NetworkManager::login(const QString& username, const QString& password) {
-    if (!isConnected()) {
-        emit loginFailed("未连接到服务器");
-        return;
-    }
     m_lastRequestType = Protocol::LOGIN;
     QJsonObject request = Protocol::buildLoginRequest(username, password);
-    m_tcpClient->sendJson(request);
+    m_client->sendJson(request);
 }
 
 void NetworkManager::registerUser(const QString& username, const QString& password) {
-    if (!isConnected()) {
-        emit registerFailed("未连接到服务器");
-        return;
-    }
     m_lastRequestType = Protocol::REGISTER;
     QJsonObject request = Protocol::buildRegisterRequest(username, password);
-    m_tcpClient->sendJson(request);
+    m_client->sendJson(request);
 }
 
 void NetworkManager::getDishList() {
-    if (!isConnected()) {
-        emit dishListError("未连接到服务器");
-        return;
-    }
     m_lastRequestType = Protocol::DISH_LIST;
     QJsonObject request = Protocol::buildDishListRequest();
-    m_tcpClient->sendJson(request);
+    m_client->sendJson(request);
 }
 
 void NetworkManager::submitOrder(const QJsonArray& dishes) {
-    if (!isConnected()) {
-        emit orderSubmitFailed("未连接到服务器");
-        return;
-    }
     m_lastRequestType = Protocol::ORDER_SUBMIT;
     QJsonObject request = Protocol::buildOrderSubmitRequest(dishes);
-    m_tcpClient->sendJson(request);
+    m_client->sendJson(request);
 }
 
 void NetworkManager::getOrderList() {
-    if (!isConnected()) {
-        emit orderListError("未连接到服务器");
-        return;
-    }
     m_lastRequestType = Protocol::ORDER_LIST;
     QJsonObject request = Protocol::buildOrderListRequest();
-    m_tcpClient->sendJson(request);
+    m_client->sendJson(request);
 }
 
 void NetworkManager::submitOrderComment(int orderId, const QString& comment) {
-    if (!isConnected()) {
-        emit orderCommentFailed("未连接到服务器");
-        return;
-    }
     m_lastRequestType = Protocol::ORDER_COMMENT;
     QJsonObject request = Protocol::buildOrderCommentRequest(orderId, comment);
-    m_tcpClient->sendJson(request);
+    m_client->sendJson(request);
 }
 
 void NetworkManager::callWaiter() {
-    if (!isConnected()) {
-        emit waiterCallError("未连接到服务器");
-        return;
-    }
     m_lastRequestType = Protocol::CALL_WAITER;
     QJsonObject request = Protocol::buildCallWaiterRequest();
-    m_tcpClient->sendJson(request);
+    m_client->sendJson(request);
 }
 
 void NetworkManager::onJsonReceived(const QJsonObject& json) {
@@ -131,7 +100,6 @@ void NetworkManager::onJsonReceived(const QJsonObject& json) {
 void NetworkManager::onConnectionError(const QString& error) {
     emit connectionError(error);
 }
-
 void NetworkManager::processLoginResponse(const ResponseParser::Response& response) {
     if (ResponseParser::isSuccess(response)) {
         emit loginSuccess();

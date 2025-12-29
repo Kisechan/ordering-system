@@ -5,7 +5,7 @@
 #include <QString>
 #include <QJsonObject>
 #include <QJsonArray>
-#include "TcpClient.h"
+#include "client.h"
 #include "ResponseParser.h"
 
 class NetworkManager : public QObject {
@@ -81,7 +81,7 @@ private:
     void processCallWaiterResponse(const ResponseParser::Response& response);
 
 private:
-    TcpClient* m_tcpClient;
+    Client* m_client;
     QString m_lastRequestType;  // 记录最后一次请求的类型，用于匹配响应
 };
 

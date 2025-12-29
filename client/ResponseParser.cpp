@@ -52,9 +52,7 @@ namespace ResponseParser {
         case PASSWORD_ERROR:
             return "密码错误";
         case USER_NOT_FOUND:
-            return "用户不存在";
-        case INVALID_PASSWORD_FORMAT:
-            return "密码格式不合法，只能包含字母和数字";
+            return "用户不存在或密码格式不合法";
         case UNKNOWN_ERROR:
         default:
             return "未知错误";

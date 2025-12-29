@@ -28,18 +28,18 @@ CONFIG += c++17
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    networks/Protocol.cpp \
-    networks/ResponseParser.cpp \
-    networks/TcpClient.cpp \
-    networks/NetworkManager.cpp
+    client.cpp \
+    Protocol.cpp \
+    ResponseParser.cpp \
+    NetworkManager.cpp
 
 HEADERS += \
     mainwindow.h \
-    networks/NetworkConfig.h \
-    networks/Protocol.h \
-    networks/ResponseParser.h \
-    networks/TcpClient.h \
-    networks/NetworkManager.h
+    client.h \
+    NetworkConfig.h \
+    Protocol.h \
+    ResponseParser.h \
+    NetworkManager.h
 
 FORMS += \
         mainwindow.ui
