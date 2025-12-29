@@ -7,6 +7,7 @@
 #include <QJsonDocument>
 #include <QObject>
 #include <QDebug>
+#include <QSqlDatabase>
 
 // 用户会话信息结构
 struct UserSession {
@@ -21,6 +22,9 @@ public:
 
     // 启动服务端，绑定端口
     bool start(quint16 port);
+
+signals:
+    void callWaiter(QString userName);
 
 protected:
     void incomingConnection(qintptr socketDescriptor) override;

@@ -5,8 +5,9 @@
 
 #include "server.h"
 
-int main(int argc, char *argv[])
-{
+#include "DbManager.h"
+
+int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
 
     //Server* server = Server::getInstance();
@@ -14,8 +15,21 @@ int main(int argc, char *argv[])
 
     eApp->init();
 
-    MainWindow w;
-    w.show();
+    db::DbConfig cfg;
+    cfg.odbcConnStr =
+        "DRIVER={MySQL ODBC 9.1 Unicode Driver};"
+        "TCPIP=1;"
+        "SERVER=localhost;"
+        "PORT=3306;"
+        "DATABASE=restaurant;"
+        "UID=root;"
+        "PWD=123456;"
+        "OPTION=3;";
+
+    auto r = db::DbManager::instance().init(cfg);
+    if (!r.isOk()) {
+        qCritical() << "DB init failed:" << r.message;
+    }
 
     return a.exec();
 }

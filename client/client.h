@@ -16,10 +16,22 @@ public:
 
     void sendJson(const QJsonObject &obj);
 
+    // 获取连接状态
+    bool isConnected() const;
+
+    // 主动断开连接
+    void disconnectFromServer();
+
 signals:
     void logMessage(const QString &msg);
 
     void receivedJson(const QJsonObject &obj);
+
+    void connected();
+
+    void disconnected();
+
+    void connectionError(const QString &error);
 
 private slots:
     void onReadyRead();
