@@ -21,33 +21,39 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 CONFIG += c++11
 
+INCLUDEPATH += $$PWD/ThirdParty/include
+
+win32-g++:LIBS += $$PWD/ThirdParty/lib/libElaWidgetTools.dll.a
+
+win32: QMAKE_POST_LINK += $$quote(cmd /c copy /y $$shell_path($$PWD/ThirdParty/bin/ElaWidgetTools.dll) $$shell_path($$OUT_PWD))
+
 SOURCES += \
-    main.cpp \
-    mainwindow.cpp \
+        main.cpp \
+        mainwindow.cpp \
     client.cpp \
-    Protocol.cpp \
-    ResponseParser.cpp \
-    NetworkManager.cpp \
-    logindialog.cpp \
-    registerdialog.cpp \
     clientmainwindow.cpp \
+    dishcard.cpp \
     homepage.cpp \
+    logindialog.cpp \
+    NetworkManager.cpp \
     placeholderpage.cpp \
-    dishcard.cpp
+    Protocol.cpp \
+    registerdialog.cpp \
+    ResponseParser.cpp
 
 HEADERS += \
-    mainwindow.h \
+        mainwindow.h \
     client.h \
-    NetworkConfig.h \
-    Protocol.h \
-    ResponseParser.h \
-    NetworkManager.h \
-    logindialog.h \
-    registerdialog.h \
     clientmainwindow.h \
+    dishcard.h \
     homepage.h \
+    logindialog.h \
+    NetworkConfig.h \
+    NetworkManager.h \
     placeholderpage.h \
-    dishcard.h
+    Protocol.h \
+    registerdialog.h \
+    ResponseParser.h
 
 FORMS += \
     mainwindow.ui
@@ -65,3 +71,12 @@ OTHER_FILES += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+DISTFILES += \
+    ThirdParty/include/Font/ElaAwesome.ttf \
+    ThirdParty/bin/ElaWidgetTools.dll \
+    ThirdParty/include/Image/Cirno.jpg \
+    ThirdParty/include/Image/Moon.jpg \
+    ThirdParty/include/Image/vvan.jpg \
+    ThirdParty/include/Image/MicaBase.png \
+    ThirdParty/include/Image/noise.png
