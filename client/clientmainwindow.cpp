@@ -5,6 +5,8 @@
 #include "Def.h"
 #include "homepage.h"
 #include "placeholderpage.h"
+#include "ElaNavigationBar.h"
+#include "ElaInteractiveCard.h"
 
 ClientMainWindow::ClientMainWindow(QWidget* parent)
     : ElaWindow(parent)
@@ -14,7 +16,7 @@ ClientMainWindow::ClientMainWindow(QWidget* parent)
     setFont(f);
 
     setWindowTitle(QStringLiteral("Online Shopping Mall(Client)"));
-    resize(1200, 720);
+    resize(1050, 720);
 
     // 左侧导航栏（Ela 内置）
     setIsNavigationBarEnable(true);
@@ -26,9 +28,16 @@ ClientMainWindow::ClientMainWindow(QWidget* parent)
     setUserInfoCardTitle(QStringLiteral("丰川祥子"));
     setUserInfoCardSubTitle(QStringLiteral("自助点餐系统"));
 
+    if (auto* nav = this->findChild<ElaNavigationBar*>()) {
+        if (auto* card = nav->findChild<ElaInteractiveCard*>()) {
+            card->setTitlePixelSize(20);
+            card->update();
+        }
+    }
+
     // 右侧主页：先做一个“可滚动壳子”
     auto* home = new HomePage(this);
-    addPageNode(QStringLiteral("主页"), home, ElaIconType::House);
+    addPageNode(QStringLiteral("点餐"), home, ElaIconType::House);
 
     // 其它页面先占位
     addPageNode(QStringLiteral("购物车"),

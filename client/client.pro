@@ -20,7 +20,8 @@ SOURCES += \
     registerdialog.cpp \
     clientmainwindow.cpp \
     homepage.cpp \
-    placeholderpage.cpp
+    placeholderpage.cpp \
+    dishcard.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -28,7 +29,8 @@ HEADERS += \
     registerdialog.h \
     clientmainwindow.h \
     homepage.h \
-    placeholderpage.h
+    placeholderpage.h \
+    dishcard.h
 
 FORMS += \
     mainwindow.ui
