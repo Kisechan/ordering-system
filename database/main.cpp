@@ -2,13 +2,11 @@
 #include <QDebug>
 
 #include "db/DbManager.h"
-#include "db/dao/UserDao.h"
-#include "db/dao/DishDao.h"
-#include "db/dao/OrderDao.h"
-#include "db/dao/ServiceDao.h"
+#include "db/service/AuthService.h"
+#include "db/service/DishService.h"
+#include "db/service/ServiceService.h"
 
 static int runSmokeTest() {
-    // 1) DB connect
     db::DbConfig cfg;
     cfg.odbcConnStr =
         "DRIVER={MariaDB ODBC 3.2 Driver};"
@@ -27,53 +25,23 @@ static int runSmokeTest() {
     }
 
     auto conn = db::DbManager::instance().db();
-    db::UserDao userDao(conn);
-    db::DishDao dishDao(conn);
-    db::OrderDao orderDao(conn);
 
-    // 2) Dish list
-    auto dishesResp = dishDao.listAll();
-    if (!dishesResp.ok()) {
-        qCritical() << "Dish list failed:" << dishesResp.code << dishesResp.msg;
-        return 3;
-    }
-    qDebug() << "dish count =" << dishesResp.data.size();
+    db::DishService dishSvc(conn);
+    auto dishes = dishSvc.listAll();
+    qDebug() << "dish count =" << dishes["data"].toArray().size();
 
-    // 3) Login (restaurant.sql default user: user1 / user1123)
-    auto login = userDao.login("user1", "user1123");
-    if (!login.ok()) {
-        qCritical() << "login failed:" << login.code << login.msg;
+    db::AuthService authSvc(conn);
+    auto login = authSvc.login("user1", "user1123");
+    if (login["code"].toInt() != 200) {
+        qCritical() << "login failed:" << login;
         return 4;
     }
-    qDebug() << "login ok, user_id=" << login.data.userId() << "username=" << login.data.username();
+    qDebug() << "login ok:" << login["data"].toObject();
 
-    // 4) Call waiter (stub)
-    db::ServiceDao serviceDao;
-    auto call = serviceDao.callWaiter("A01");
-    if (call.ok()) qDebug() << call.msg;
+    db::ServiceService serviceSvc;
+    qDebug() << serviceSvc.callWaiter("A01")["msg"].toString();
 
-    // 5) Optional: submit an order (uncomment if you want to test transaction)
-    /*
-    QVector<db::DishCount> cart;
-    cart.push_back(db::DishCount(1, 2));
-    cart.push_back(db::DishCount(3, 1));
-
-    auto submit = orderDao.submitOrder(login.data.userId(), cart);
-    if (!submit.ok()) {
-        qCritical() << "submitOrder failed:" << submit.code << submit.msg;
-        return 5;
-    }
-    qDebug() << submit.msg;
-
-    auto history = orderDao.listOrdersByUser(login.data.userId());
-    if (!history.ok()) {
-        qCritical() << "order history failed:" << history.code << history.msg;
-        return 6;
-    }
-    qDebug() << "order history size =" << history.data.size();
-    */
-
-    qDebug() << "DB + DAO SmokeTest OK.";
+    qDebug() << "DB + JSON DAO SmokeTest OK.";
     return 0;
 }
 

@@ -1,134 +1,96 @@
 #include "DishDao.h"
 #include "DaoCommon.h"
+#include "JsonUtil.h"
+#include <QJsonArray>
 
 namespace db {
 
-ApiResponse<Dish> DishDao::getById(int dishId) const {
-    ApiResponse<Dish> resp;
+static QJsonObject rowToDish(const QSqlQuery& q) {
+    QJsonObject d;
+    d.insert("dish_id", q.value("dish_id").toInt());
+    d.insert("name", q.value("name").toString());
+    d.insert("price", q.value("price").toDouble());
+    d.insert("category", q.value("category").toString());
+    d.insert("rating", q.value("rating").toDouble());
+    d.insert("url", q.value("url").toString());
+    d.insert("description", q.value("description").toString());
+    return d;
+}
 
+QJsonObject DishDao::listAll() const {
     QString err;
-    if (!dbIsOpen(db_, &err)) { resp.code = 500; resp.msg = err; return resp; }
+    if (!dbIsOpen(db_, &err)) return makeErr(500, err);
 
     QSqlQuery q(db_);
-    q.prepare("SELECT dish_id, name, price, category, rating, url, description "
-              "FROM t_dish WHERE dish_id=? LIMIT 1");
+    if (!q.exec("SELECT dish_id, name, price, category, rating, url, description FROM t_dish ORDER BY dish_id ASC")) {
+        return makeErr(500, sqlErr(q));
+    }
+
+    QJsonArray arr;
+    while (q.next()) arr.append(rowToDish(q));
+
+    return makeOk(arr);
+}
+
+QJsonObject DishDao::findById(int dishId) const {
+    QString err;
+    if (!dbIsOpen(db_, &err)) return makeErr(500, err);
+
+    QSqlQuery q(db_);
+    q.prepare("SELECT dish_id, name, price, category, rating, url, description FROM t_dish WHERE dish_id=? LIMIT 1");
     q.addBindValue(dishId);
 
-    if (!q.exec()) { resp.code = 500; resp.msg = sqlErr(q); return resp; }
-    if (!q.next()) { resp.code = 404; resp.msg = "菜品不存在"; return resp; }
+    if (!q.exec()) return makeErr(500, sqlErr(q));
+    if (!q.next()) return makeOk(QJsonValue::Null);
 
-    Dish d;
-    d.setDishId(q.value("dish_id").toInt());
-    d.setName(q.value("name").toString());
-    d.setPrice(q.value("price").toDouble());
-    d.setCategory(q.value("category").toString());
-    d.setRating(q.value("rating").toDouble());
-    d.setUrl(q.value("url").toString());
-    d.setDescription(q.value("description").toString());
-
-    resp.code = 200;
-    resp.msg = "获取成功";
-    resp.data = d;
-    return resp;
+    return makeOk(rowToDish(q));
 }
 
-ApiResponse<QVector<Dish>> DishDao::listAll() const {
-    ApiResponse<QVector<Dish>> resp;
-
+QJsonObject DishDao::insertDish(const QJsonObject& dish) const {
     QString err;
-    if (!dbIsOpen(db_, &err)) { resp.code = 500; resp.msg = err; return resp; }
+    if (!dbIsOpen(db_, &err)) return makeErr(500, err);
 
     QSqlQuery q(db_);
-    if (!q.exec("SELECT dish_id, name, price, category, rating, url, description "
-                "FROM t_dish ORDER BY dish_id ASC")) {
-        resp.code = 500;
-        resp.msg = sqlErr(q);
-        return resp;
-    }
+    q.prepare("INSERT INTO t_dish(name, price, category, rating, url, description) VALUES(?, ?, ?, ?, ?, ?)");
+    q.addBindValue(dish.value("name").toString());
+    q.addBindValue(dish.value("price").toDouble());
+    q.addBindValue(dish.value("category").toString());
+    q.addBindValue(dish.value("rating").toDouble());
+    q.addBindValue(dish.value("url").toString());
+    q.addBindValue(dish.value("description").toString());
 
-    QVector<Dish> out;
-    while (q.next()) {
-        Dish d;
-        d.setDishId(q.value("dish_id").toInt());
-        d.setName(q.value("name").toString());
-        d.setPrice(q.value("price").toDouble());
-        d.setCategory(q.value("category").toString());
-        d.setRating(q.value("rating").toDouble());
-        d.setUrl(q.value("url").toString());
-        d.setDescription(q.value("description").toString());
-        out.push_back(d);
-    }
-
-    resp.code = 200;
-    resp.msg = "获取成功";
-    resp.data = out;
-    return resp;
+    if (!q.exec()) return makeErr(500, sqlErr(q));
+    return makeOk(QJsonValue::Null);
 }
 
-ApiResponseVoid DishDao::addDish(const Dish& dish) const {
-    ApiResponseVoid resp;
-
+QJsonObject DishDao::updateDish(const QJsonObject& dish) const {
     QString err;
-    if (!dbIsOpen(db_, &err)) { resp.code = 500; resp.msg = err; return resp; }
+    if (!dbIsOpen(db_, &err)) return makeErr(500, err);
 
     QSqlQuery q(db_);
-    q.prepare("INSERT INTO t_dish(name, price, category, rating, url, description) "
-              "VALUES(?, ?, ?, ?, ?, ?)");
-    q.addBindValue(dish.name());
-    q.addBindValue(dish.price());
-    q.addBindValue(dish.category());
-    q.addBindValue(dish.rating());
-    q.addBindValue(dish.url());
-    q.addBindValue(dish.description());
+    q.prepare("UPDATE t_dish SET name=?, price=?, category=?, rating=?, url=?, description=? WHERE dish_id=?");
+    q.addBindValue(dish.value("name").toString());
+    q.addBindValue(dish.value("price").toDouble());
+    q.addBindValue(dish.value("category").toString());
+    q.addBindValue(dish.value("rating").toDouble());
+    q.addBindValue(dish.value("url").toString());
+    q.addBindValue(dish.value("description").toString());
+    q.addBindValue(dish.value("dish_id").toInt());
 
-    if (!q.exec()) { resp.code = 500; resp.msg = sqlErr(q); return resp; }
-
-    resp.code = 200;
-    resp.msg = "新增成功";
-    return resp;
+    if (!q.exec()) return makeErr(500, sqlErr(q));
+    return makeOk(QJsonValue::Null);
 }
 
-ApiResponseVoid DishDao::updateDish(const Dish& dish) const {
-    ApiResponseVoid resp;
-
+QJsonObject DishDao::deleteDish(int dishId) const {
     QString err;
-    if (!dbIsOpen(db_, &err)) { resp.code = 500; resp.msg = err; return resp; }
-
-    QSqlQuery q(db_);
-    q.prepare("UPDATE t_dish SET name=?, price=?, category=?, rating=?, url=?, description=? "
-              "WHERE dish_id=?");
-    q.addBindValue(dish.name());
-    q.addBindValue(dish.price());
-    q.addBindValue(dish.category());
-    q.addBindValue(dish.rating());
-    q.addBindValue(dish.url());
-    q.addBindValue(dish.description());
-    q.addBindValue(dish.dishId());
-
-    if (!q.exec()) { resp.code = 500; resp.msg = sqlErr(q); return resp; }
-    if (q.numRowsAffected() <= 0) { resp.code = 404; resp.msg = "菜品不存在"; return resp; }
-
-    resp.code = 200;
-    resp.msg = "修改成功";
-    return resp;
-}
-
-ApiResponseVoid DishDao::deleteDish(int dishId) const {
-    ApiResponseVoid resp;
-
-    QString err;
-    if (!dbIsOpen(db_, &err)) { resp.code = 500; resp.msg = err; return resp; }
+    if (!dbIsOpen(db_, &err)) return makeErr(500, err);
 
     QSqlQuery q(db_);
     q.prepare("DELETE FROM t_dish WHERE dish_id=?");
     q.addBindValue(dishId);
 
-    if (!q.exec()) { resp.code = 500; resp.msg = sqlErr(q); return resp; }
-    if (q.numRowsAffected() <= 0) { resp.code = 404; resp.msg = "菜品不存在"; return resp; }
-
-    resp.code = 200;
-    resp.msg = "删除成功";
-    return resp;
+    if (!q.exec()) return makeErr(500, sqlErr(q));
+    return makeOk(QJsonValue::Null);
 }
 
 } // namespace db

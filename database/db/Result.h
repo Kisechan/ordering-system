@@ -5,12 +5,9 @@ namespace db {
 
 enum class ErrorCode {
     Ok = 0,
-    DriverMissing = 1,
-    DbNotOpen = 2,
-    SqlError = 3,
-    InvalidParam = 4,
-    NotFound = 5,
-    Conflict = 6
+    DriverMissing,
+    DbNotOpen,
+    InvalidParam
 };
 
 struct Result {

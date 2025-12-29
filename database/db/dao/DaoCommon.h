@@ -1,9 +1,9 @@
 #pragma once
 #include <QSqlDatabase>
 #include <QSqlError>
-#include <QVariant>
 #include <QSqlQuery>
 #include <QString>
+#include <QVariant>
 
 namespace db {
 

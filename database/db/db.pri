@@ -1,26 +1,33 @@
 # db/db.pri
-# 注意：$$PWD 本身就是 .../database/db
+# include from root .pro: include($$PWD/db/db.pri)
+# $$PWD here is .../database/db
 
 INCLUDEPATH += $$PWD
 
 HEADERS += \
     $$PWD/Result.h \
     $$PWD/DbManager.h \
-    $$PWD/dao/ApiResponse.h \
     $$PWD/dao/DaoCommon.h \
+    $$PWD/dao/JsonUtil.h \
     $$PWD/dao/UserDao.h \
     $$PWD/dao/DishDao.h \
     $$PWD/dao/OrderDao.h \
-    $$PWD/dao/ServiceDao.h \
+    $$PWD/dao/OrderDishDao.h \
+    $$PWD/dao/OrderQueryDao.h \
     $$PWD/entity/User.h \
-    $$PWD/entity/Dish.h \
     $$PWD/entity/DishCount.h \
-    $$PWD/entity/OrderDishItem.h \
-    $$PWD/entity/Order.h \
-    $$PWD/entity/AdminOrderBrief.h
+    $$PWD/service/AuthService.h \
+    $$PWD/service/DishService.h \
+    $$PWD/service/OrderService.h \
+    $$PWD/service/ServiceService.h
 
 SOURCES += \
     $$PWD/DbManager.cpp \
     $$PWD/dao/UserDao.cpp \
     $$PWD/dao/DishDao.cpp \
-    $$PWD/dao/OrderDao.cpp
+    $$PWD/dao/OrderDao.cpp \
+    $$PWD/dao/OrderDishDao.cpp \
+    $$PWD/dao/OrderQueryDao.cpp \
+    $$PWD/service/AuthService.cpp \
+    $$PWD/service/DishService.cpp \
+    $$PWD/service/OrderService.cpp

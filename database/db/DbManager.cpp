@@ -1,5 +1,4 @@
 #include "DbManager.h"
-
 #include <QSqlError>
 #include <QStringList>
 
@@ -15,13 +14,10 @@ Result DbManager::init(const DbConfig& cfg) {
     cfg_ = cfg;
 
     const QString driver = QStringLiteral("QODBC");
-    const auto drivers = QSqlDatabase::drivers();
-    if (!drivers.contains(driver)) {
-        return Result::fail(ErrorCode::DriverMissing,
-                            "QODBC driver missing. Ensure Qt ODBC plugin (qsqlodbc) is deployed.");
+    if (!QSqlDatabase::drivers().contains(driver)) {
+        return Result::fail(ErrorCode::DriverMissing, "QODBC driver missing (qsqlodbc plugin).");
     }
 
-    // Reuse existing connection if present
     if (QSqlDatabase::contains(cfg_.connectionName)) {
         db_ = QSqlDatabase::database(cfg_.connectionName);
         if (db_.isOpen()) db_.close();
@@ -29,13 +25,12 @@ Result DbManager::init(const DbConfig& cfg) {
         db_ = QSqlDatabase::addDatabase(driver, cfg_.connectionName);
     }
 
-    // Prefer full conn string
     const QString connStr = !cfg_.odbcConnStr.trimmed().isEmpty()
         ? cfg_.odbcConnStr.trimmed()
         : QStringLiteral("DSN=%1;").arg(cfg_.odbcDsn.trimmed());
 
     if (connStr.trimmed().isEmpty()) {
-        return Result::fail(ErrorCode::InvalidParam, "Empty ODBC connection string / DSN.");
+        return Result::fail(ErrorCode::InvalidParam, "Empty ODBC connection string/DSN.");
     }
 
     db_.setDatabaseName(connStr);
@@ -43,7 +38,6 @@ Result DbManager::init(const DbConfig& cfg) {
     if (!db_.open()) {
         return Result::fail(ErrorCode::DbNotOpen, db_.lastError().text());
     }
-
     return Result::ok();
 }
 

@@ -1,8 +1,6 @@
 #pragma once
-
 namespace db {
 
-// (dish_id, count) in order_submit request
 class DishCount {
 public:
     DishCount() = default;
