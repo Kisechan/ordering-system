@@ -39,11 +39,7 @@ private:
 
     static Server* server;
 
-    static QSqlDatabase conn;
-
     explicit Server(QObject* parent = nullptr);
-
-    static void initConnection();
 
     void processRequest(QTcpSocket* socket, const QJsonObject& request);
 
