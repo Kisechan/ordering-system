@@ -11,30 +11,9 @@
 #include "entity/DishCount.h"
 
 Server* Server::server = new Server();
-QSqlDatabase Server::conn;
 
 Server::Server(QObject* parent)
     : QTcpServer(parent) {
-    initConnection();
-}
-
-void Server::initConnection() {
-    db::DbConfig cfg;
-    cfg.odbcConnStr =
-        "DRIVER={MariaDB ODBC 3.2 Driver};"
-        "TCPIP=1;"
-        "SERVER=localhost;"
-        "PORT=3306;"
-        "DATABASE=restaurant;"
-        "UID=root;"
-        "PWD=123456;"
-        "OPTION=3;";
-
-    auto r = db::DbManager::instance().init(cfg);
-    if (!r.isOk()) {
-        qCritical() << "DB init failed:" << r.message;
-    }
-    conn = db::DbManager::instance().db();
 }
 
 Server* Server::getInstance() {
@@ -101,6 +80,7 @@ void Server::disconnected() {
 void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
     QString type = request["type"].toString();
     QJsonObject response;
+    QSqlDatabase conn = db::DbManager::instance().db();
 
     if (type == "login") {
         QString userName = request["username"].toString();
