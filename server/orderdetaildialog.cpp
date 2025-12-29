@@ -18,7 +18,6 @@ OrderDetailDialog::OrderDetailDialog(QWidget* parent)
     setWindowModality(Qt::ApplicationModal);
 
 
-
     // 设置对话框大小
     setMinimumSize(800, 600);
 
@@ -174,7 +173,12 @@ void OrderDetailDialog::buildDishList()
     }
 
     // 添加菜品卡片（仿照DishCard设计）
-    for (const auto& dish : m_order.dishes) {
+    for (const auto& orderDish : m_order.dishes) {
+        const Dish& dish = orderDish.dish;
+        int quantity = orderDish.quantity;
+        double customerRating = orderDish.customer_rating;
+        double totalPrice = dish.price * quantity;
+
         auto* dishRow = new QWidget(m_dishListContainer);
         dishRow->setObjectName("DishRowInOrder");
         dishRow->setStyleSheet(
@@ -219,10 +223,11 @@ void OrderDetailDialog::buildDishList()
         auto* nameLabel = new ElaText(dish.name, 18, dishRow);
         nameLabel->setStyleSheet("font-weight: bold;");
 
+        // 显示品类和客户评分（注：不是总体评分）
         auto* metaLabel = new ElaText(
-            QStringLiteral("品类：%1    评分：%2")
+            QStringLiteral("品类：%1    顾客的评分：%2")
                 .arg(dish.category.isEmpty() ? QStringLiteral("-") : dish.category)
-                .arg(QString::number(dish.rating, 'f', 1)),
+                .arg(customerRating > 0 ? QString::number(customerRating, 'f', 1) : QStringLiteral("未评分")),
             15, dishRow);
         metaLabel->setStyleSheet("color:#666666;");
 
@@ -230,16 +235,35 @@ void OrderDetailDialog::buildDishList()
         descLabel->setStyleSheet("color:#888888;");
         descLabel->setWordWrap(true);
 
-        auto* priceLabel = new ElaText(
-            QStringLiteral("¥%1").arg(QString::number(dish.price, 'f', 2)),
+        // 底部价格区域：显示数量、单价和总价
+        auto* priceLayout = new QHBoxLayout();
+        priceLayout->setSpacing(15);
+
+        auto* unitPriceLabel = new ElaText(
+            QStringLiteral("单价：¥%1").arg(QString::number(dish.price, 'f', 2)),
+            15, dishRow);
+        unitPriceLabel->setStyleSheet("color:#888888;");
+
+        auto* quantityLabel = new ElaText(
+            QStringLiteral("× %1").arg(quantity),
+            16, dishRow);
+        quantityLabel->setStyleSheet("color:#666666; font-weight: bold;");
+
+        auto* totalPriceLabel = new ElaText(
+            QStringLiteral("小计：¥%1").arg(QString::number(totalPrice, 'f', 2)),
             20, dishRow);
-        priceLabel->setStyleSheet("color:#ff6a00; font-weight: bold;");
+        totalPriceLabel->setStyleSheet("color:#ff6a00; font-weight: bold;");
+
+        priceLayout->addWidget(unitPriceLabel);
+        priceLayout->addWidget(quantityLabel);
+        priceLayout->addStretch();
+        priceLayout->addWidget(totalPriceLabel);
 
         rightLayout->addWidget(nameLabel);
         rightLayout->addWidget(metaLabel);
         rightLayout->addWidget(descLabel);
         rightLayout->addStretch();
-        rightLayout->addWidget(priceLabel);
+        rightLayout->addLayout(priceLayout);
 
         rowLayout->addLayout(rightLayout, 1);
 

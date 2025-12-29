@@ -10,6 +10,13 @@
 class ElaText;
 class ElaPushButton;
 
+// 订单菜品结构体（对应数据库 t_order_dish 表，假设新添加了quantity（该菜品点购数量）和customer_rating（用户对此次菜品的评分））
+struct OrderDish {
+    Dish    dish;               // 菜品信息
+    int     quantity = 1;       // 该菜品点购数量
+    double  customer_rating = 0.0; // 用户对此次菜品的评分 0.0为默认未评价
+};
+
 // 订单结构体（对应数据库 t_order 表）
 struct Order {
     int         order_id = 0;
@@ -18,7 +25,7 @@ struct Order {
     double      total_amount = 0.0;
     QDateTime   create_time;
     QString     comment;
-    QList<Dish> dishes;            // 订单包含的菜品列表
+    QList<OrderDish> dishes;            // 订单包含的菜品列表
 };
 
 class OrderCard : public QWidget
