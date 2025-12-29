@@ -6,4 +6,7 @@
         <file>Image/noise.png</file>
         <file>Image/MicaBase.png</file>
     </qresource>
+    <qresource prefix="/">
+        <file>Image/vvan.jpg</file>
+    </qresource>
 </RCC>

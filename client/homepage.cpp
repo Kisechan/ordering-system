@@ -64,7 +64,7 @@ HomePage::HomePage(QWidget* parent)
     d.price = 28.00;
     d.category = QStringLiteral("川菜");
     d.rating = 4.8;
-    d.url = QStringLiteral(":/include/Image/Moon.jpg"); // 先用资源占位
+    d.url = QStringLiteral(":/Image/vvan.jpg"); // 先用资源占位
     d.description = QStringLiteral("经典川菜，微辣香脆");
     setDishList({d,d,d,d,d,d,d,d,d,d,d,d,d,d});
 }

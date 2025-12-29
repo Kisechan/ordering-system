@@ -3,6 +3,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QImage>
+#include <QDebug>
 
 #include "ElaImageCard.h"
 #include "ElaText.h"
@@ -30,6 +31,7 @@ DishCard::DishCard(QWidget* parent)
     m_img = new ElaImageCard(this);
     m_img->setFixedSize(180, 120);
     m_img->setBorderRadius(10);
+    m_img->setMaximumAspectRatio(1.0);
     m_img->setIsPreserveAspectCrop(true);
     root->addWidget(m_img, 0, Qt::AlignTop);
 
@@ -92,8 +94,7 @@ DishCard::DishCard(QWidget* parent)
     connect(m_plus,  &ElaPushButton::clicked, this, &DishCard::onPlus);
     connect(m_addBtn,&ElaPushButton::clicked, this, &DishCard::onAddToCart);
 
-    setMinimumHeight(150); // ✅ 防止布局把它压扁成 0
-
+    setMinimumHeight(150);
     refreshUI();
 }
 
@@ -142,6 +143,7 @@ void DishCard::refreshUI()
     if (m_img) {
         QImage img;
         if (m_dish.url.startsWith(":/")) img = QImage(m_dish.url);
+       // qDebug() << "img isNull=" << img.isNull() << " size=" << img.size() << " url=" << m_dish.url;
         if (!img.isNull()) m_img->setCardImage(img);
     }
 }

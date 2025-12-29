@@ -21,7 +21,7 @@ SOURCES += \
     clientmainwindow.cpp \
     homepage.cpp \
     placeholderpage.cpp \
-    dishcard.cpp
+    dishcard.cpp \
 
 HEADERS += \
     mainwindow.h \
@@ -30,7 +30,7 @@ HEADERS += \
     clientmainwindow.h \
     homepage.h \
     placeholderpage.h \
-    dishcard.h
+    dishcard.h \
 
 FORMS += \
     mainwindow.ui
@@ -48,3 +48,10 @@ OTHER_FILES += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+DISTFILES += \
+    ThirdParty/include/Image/Cirno.jpg \
+    ThirdParty/include/Image/Moon.jpg \
+    ThirdParty/include/Image/vvan.jpg \
+    ThirdParty/include/Image/MicaBase.png \
+    ThirdParty/include/Image/noise.png
