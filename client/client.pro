@@ -4,10 +4,10 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
-QT       += network
+QT += core gui
+QT += core gui network
+QT += widgets
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = client
 TEMPLATE = app
@@ -26,14 +26,20 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++17
 
 SOURCES += \
-        main.cpp \
-        mainwindow.cpp \
-    client.cpp
-
+    main.cpp \
+    mainwindow.cpp \
+    client.cpp \
+    Protocol.cpp \
+    ResponseParser.cpp \
+    NetworkManager.cpp
 
 HEADERS += \
-        mainwindow.h \
-    client.h
+    mainwindow.h \
+    client.h \
+    NetworkConfig.h \
+    Protocol.h \
+    ResponseParser.h \
+    NetworkManager.h
 
 FORMS += \
         mainwindow.ui
@@ -42,3 +48,5 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+DISTFILES +=
