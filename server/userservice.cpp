@@ -1,6 +1,7 @@
 #include "userservice.h"
 
 #include <QCryptographicHash>
+#include <QDateTime>
 
 UserService* UserService::userService = new UserService();
 
@@ -14,7 +15,7 @@ UserService *UserService::getInstance() {
 
 QJsonObject UserService::login(QString username, QString password) {
     QJsonObject response;
-//    User user = UserMapper::getInstance().getByUserName(username);
+//    User user = UserDao::getInstance().getByUserName(username);
 
 //    if (!user.isValid()) {
 //        response["code"] = 402;
@@ -41,14 +42,19 @@ QJsonObject UserService::login(QString username, QString password) {
 
 QJsonObject UserService::registerAccount(QString username, QString password) {
     QJsonObject response;
+//    UserDao userDao = UserDao::getInstance();
 
-//    User probUser = UserMapper::getInstance().getByUserName(username);
+//    User probUser = userDao.getByUserName(username);
 //    if (proUser.isValid()) {
 //        response["code"] = 402;
 //        response["msg"] = "该用户名已被占用！";
 //        return response;
 //    }
 
+//    User user;
+//    user.setUserName(username);
+//    user.setPassword(password);
+//    user.setRegisterTime(QDateTime::currentDateTime());
 
 
     return response;
