@@ -1,0 +1,81 @@
+#include "clientmainwindow.h"
+
+#include <QPixmap>
+#include <QDebug>
+#include "Def.h"
+#include "homepage.h"
+#include "cartpage.h"
+#include "placeholderpage.h"
+#include "ElaNavigationBar.h"
+#include "ElaInteractiveCard.h"
+
+ClientMainWindow::ClientMainWindow(QWidget* parent)
+    : ElaWindow(parent)
+{
+    QFont f = font();
+    f.setPointSize(20);
+    setFont(f);
+
+    setWindowTitle(QStringLiteral("Online Shopping Mall(Client)"));
+    resize(1050, 720);
+
+    // 左侧导航栏（Ela 内置）
+    setIsNavigationBarEnable(true);
+    setNavigationBarDisplayMode(ElaNavigationType::Maximal);
+
+    // 头像信息卡
+    setUserInfoCardVisible(true);
+    setUserInfoCardPixmap(QPixmap(QStringLiteral(":/include/Image/Moon.jpg"))); // 你换成自己的头像资源
+    setUserInfoCardTitle(QStringLiteral("丰川祥子"));
+    setUserInfoCardSubTitle(QStringLiteral("自助点餐系统"));
+
+    if (auto* nav = this->findChild<ElaNavigationBar*>()) {
+        if (auto* card = nav->findChild<ElaInteractiveCard*>()) {
+            card->setTitlePixelSize(20);
+            card->update();
+        }
+    }
+
+    // 点餐页面：可滚动菜品展示
+    m_cart = new CartManager(this);
+    m_home = new HomePage(this);
+    addPageNode(QStringLiteral("点餐"), m_home, ElaIconType::House);
+
+    connect(m_home, &HomePage::addToCartRequested,
+            m_cart, [this](const Dish& dish, int qty) {
+                m_cart->addDish(dish, qty);
+            });
+
+
+    // 购物车页面：展示已点菜品及结算
+    auto* cartPage = new CartPage(m_cart, this);
+    addPageNode(QStringLiteral("购物车"), cartPage, ElaIconType::CartShopping);
+
+    connect(cartPage, &CartPage::orderRequested, this, [this](const OrderDraft& draft){
+        // 点单逻辑，需要实现
+        // 选了哪些菜品，每个菜品选了几个放在数据结构 m_cart（类型是 CartManager）里面了
+        // ............................................................
+    });
+
+    addPageNode(QStringLiteral("收货地址"),
+                new PlaceholderPage(QStringLiteral("收货地址（占位页）"), this),
+                ElaIconType::MapLocationDot);
+
+    addPageNode(QStringLiteral("订单记录"),
+                new PlaceholderPage(QStringLiteral("订单记录（占位页）"), this),
+                ElaIconType::Receipt);
+
+    addPageNode(QStringLiteral("消息"),
+                new PlaceholderPage(QStringLiteral("消息（占位页）"), this),
+                ElaIconType::Message);
+
+    // 底部 Footer：账号管理
+    QString accountKey;
+    addFooterNode(QStringLiteral("账号管理"),
+                  new PlaceholderPage(QStringLiteral("账号管理（占位页）"), this),
+                  accountKey,
+                  0,
+                  ElaIconType::UserGear);
+
+    moveToCenter();
+}

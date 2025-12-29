@@ -1,15 +1,22 @@
 #include "server.h"
 
-Server* Server::server = nullptr;
+#include <QJsonArray>
+#include <QJsonValue>
+
+
+#include "service/AuthService.h"
+#include "service/DishService.h"
+#include "service/OrderService.h"
+#include "DbManager.h"
+#include "entity/DishCount.h"
+
+Server* Server::server = new Server();
 
 Server::Server(QObject* parent)
     : QTcpServer(parent) {
 }
 
 Server* Server::getInstance() {
-    if (server == nullptr) {
-        server = new Server();
-    }
     return server;
 }
 
@@ -73,26 +80,68 @@ void Server::disconnected() {
 void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
     QString type = request["type"].toString();
     QJsonObject response;
+    QSqlDatabase conn = db::DbManager::instance().db();
 
     if (type == "login") {
         QString userName = request["username"].toString();
         QString password = request["password"].toString();
 
-        // TODO: 获取登录响应结果
+        // 获取登录响应结果
+        db::AuthService authService(conn);
+        response = authService.login(userName, password);
 
-        // TODO: 如果登录成功，记录到 userMap
+        // 如果登录成功，记录到 userMap
+        UserSession userSession;
+        QJsonObject data = request["data"].toObject();
+        userSession.userId = data["user_id"].toInt();
+        userSession.username = data["username"].toString();
+        userMap[socket] = userSession;
     } else if (type == "register") {
-        // TODO: 获取注册响应结果
+        QString username = request["username"].toString();
+        QString password = request["password"].toString();
+
+        // 取注册响应结果
+        db::AuthService authService(conn);
+        response = authService.registerUser(username, password);
     } else if (type == "dish_list") {
-        // TODO: 获取菜品详细信息
+        // 获取菜品详细信息
+        db::DishService dishService(conn);
+        response = dishService.listAll();
     } else if (type == "call_waiter") {
-        // TODO: 发送呼叫服务员信号
+        // 发送呼叫服务员信号
+        QString username = userMap[socket].username;
+        emit callWaiter(username);
+        response["code"] = 200;
+        response["msg"] = "服务员已收到您的呼叫，请耐心等待~";
     } else if (type == "order_submit") {
-        // TODO: 获取订单提交结果
+        int userId = userMap[socket].userId;
+        QVector<db::DishCount> dishCountList;
+        QJsonArray data = request["data"].toArray();
+        for (QJsonValue v : data) {
+            QJsonObject obj = v.toObject();
+            db::DishCount ds;
+            ds.setDishId(obj["dish_id"].toInt());
+            ds.setCount(obj["count"].toInt());
+            dishCountList.append(ds);
+        }
+
+        // 获取订单提交结果
+        db::OrderService orderService(conn);
+        response = orderService.submitOrder(userId, dishCountList);
     } else if (type == "order_list") {
-        // TODO: 获取订单详细信息
+        int userId = userMap[socket].userId;
+
+        // 获取订单详细信息
+        db::OrderService orderService(conn);
+        response = orderService.listOrdersByUser(userId);
     } else if (type == "order_comment") {
-        // TODO: 获取历史订单详细信息
+        QJsonObject data = request["data"].toObject();
+        int orderId = data["orderId"].toInt();
+        QString comment = data["comment"].toString();
+
+        // 获取提交评论结果
+        db::OrderService orderService(conn);
+        response = orderService.submitComment(orderId, comment);
     } else {
         response["code"] = 401;
         response["msg"] = "未知的请求!";
