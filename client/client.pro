@@ -22,11 +22,32 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
-        main.cpp \
-        mainwindow.cpp
+    main.cpp \
+    mainwindow.cpp \
+    client.cpp \
+    Protocol.cpp \
+    ResponseParser.cpp \
+    NetworkManager.cpp \
+    logindialog.cpp \
+    registerdialog.cpp \
+    clientmainwindow.cpp \
+    homepage.cpp \
+    placeholderpage.cpp \
+    dishcard.cpp
 
 HEADERS += \
-        mainwindow.h
+    mainwindow.h \
+    client.h \
+    NetworkConfig.h \
+    Protocol.h \
+    ResponseParser.h \
+    NetworkManager.h \
+    logindialog.h \
+    registerdialog.h \
+    clientmainwindow.h \
+    homepage.h \
+    placeholderpage.h \
+    dishcard.h
 
 FORMS += \
     mainwindow.ui
