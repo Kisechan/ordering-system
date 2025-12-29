@@ -2,20 +2,11 @@
 
 #include <QWidget>
 #include <QString>
+#include "carttype.h"
 
 class ElaImageCard;
 class ElaText;
 class ElaPushButton;
-
-struct Dish {
-    int     dish_id = 0;
-    QString name;
-    double  price = 0.0;
-    QString category;
-    double  rating = 0.0;
-    QString url;          // 资源路径(:/...) 或后端路径(/img/xxx.jpg)
-    QString description;
-};
 
 class DishCard : public QWidget
 {

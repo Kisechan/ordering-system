@@ -1,9 +1,10 @@
 #include "clientmainwindow.h"
 
 #include <QPixmap>
-
+#include <QDebug>
 #include "Def.h"
 #include "homepage.h"
+#include "cartpage.h"
 #include "placeholderpage.h"
 #include "ElaNavigationBar.h"
 #include "ElaInteractiveCard.h"
@@ -35,14 +36,26 @@ ClientMainWindow::ClientMainWindow(QWidget* parent)
         }
     }
 
-    // 右侧主页：先做一个“可滚动壳子”
-    auto* home = new HomePage(this);
-    addPageNode(QStringLiteral("点餐"), home, ElaIconType::House);
+    // 点餐页面：可滚动菜品展示
+    m_cart = new CartManager(this);
+    m_home = new HomePage(this);
+    addPageNode(QStringLiteral("点餐"), m_home, ElaIconType::House);
 
-    // 其它页面先占位
-    addPageNode(QStringLiteral("购物车"),
-                new PlaceholderPage(QStringLiteral("购物车（占位页）"), this),
-                ElaIconType::CartShopping);
+    connect(m_home, &HomePage::addToCartRequested,
+            m_cart, [this](const Dish& dish, int qty) {
+                m_cart->addDish(dish, qty);
+            });
+
+
+    // 购物车页面：展示已点菜品及结算
+    auto* cartPage = new CartPage(m_cart, this);
+    addPageNode(QStringLiteral("购物车"), cartPage, ElaIconType::CartShopping);
+
+    connect(cartPage, &CartPage::orderRequested, this, [this](const OrderDraft& draft){
+        // 点单逻辑，需要实现
+        // 选了哪些菜品，每个菜品选了几个放在数据结构 m_cart（类型是 CartManager）里面了
+        // ............................................................
+    });
 
     addPageNode(QStringLiteral("收货地址"),
                 new PlaceholderPage(QStringLiteral("收货地址（占位页）"), this),

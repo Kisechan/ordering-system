@@ -21,6 +21,7 @@ public:
 
 signals:
     void searchRequested(const QString& keyword);
+    void addToCartRequested(const Dish& dish, int qty);
 
 private slots:
     void onSearchTextChanged(const QString& text);
