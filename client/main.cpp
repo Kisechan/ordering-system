@@ -8,8 +8,6 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    MainWindow w;
-    w.show();
 
     Client* client = Client::getInstance();
     client->connectToServer("127.0.0.1", 5523);
