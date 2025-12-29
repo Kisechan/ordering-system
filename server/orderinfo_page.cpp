@@ -1,4 +1,7 @@
 #include "orderinfo_page.h"
+#include "ordercard.h"
+#include "orderdetaildialog.h"
+
 #include "ElaMessageBar.h"
 #include "ElaText.h"
 #include "ElaPushButton.h"
@@ -9,154 +12,219 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QWidget>
+#include <QTimer>
 
 OrderInfo_Page::OrderInfo_Page(QWidget* parent):
     ElaScrollPage(parent)
 {
-    // ===== 页面不显示默认标题 =====
-      setTitleVisible(false);
+    setTitleVisible(false);
+    setPageTitleSpacing(0);
 
-      // ===== 中央容器 =====
-      center_widget_ = new QWidget(this);
-      main_layout_   = new QVBoxLayout(center_widget_);
-      main_layout_->setContentsMargins(0, 0, 20, 0);
-      main_layout_->setSpacing(14);
+    // ===== 滚动内容根容器 =====
+    auto* content = new QWidget(this);
+    auto* root = new QVBoxLayout(content);
+    root->setContentsMargins(20, 18, 20, 18);
+    root->setSpacing(12);
 
-      // ===== 顶部操作栏 =====
-      QWidget* top_bar = new QWidget(center_widget_);
-      QHBoxLayout* top_layout = new QHBoxLayout(top_bar);
-      top_layout->setContentsMargins(0, 0, 0, 0);
-      top_layout->setSpacing(10);
+    // ===== 顶部操作栏 =====
+    auto* topBar = new QWidget(content);
+    auto* topLayout = new QHBoxLayout(topBar);
+    topLayout->setContentsMargins(0, 0, 0, 0);
+    topLayout->setSpacing(10);
 
-      ElaText* title = new ElaText("", top_bar);
-      title->setTextPixelSize(0);
+    auto* title = new ElaText(QStringLiteral("订单管理"), 22, topBar);
+    title->setStyleSheet("font-weight: bold;");
 
-      user_search_edit_ = new ElaLineEdit(top_bar);
-      user_search_edit_->setPlaceholderText("输入用户名查询");
-      user_search_edit_->setFixedSize(180, 36);
+    m_searchEdit = new ElaLineEdit(topBar);
+    m_searchEdit->setPlaceholderText(QStringLiteral("搜索订单号 / 用户名 / 备注"));
+    m_searchEdit->setClearButtonEnabled(true);
+    m_searchEdit->setMinimumHeight(36);
+    m_searchEdit->setFixedWidth(260);
 
-      search_btn_ = new ElaPushButton("查询", top_bar);
-      search_btn_->setFixedSize(80, 36);
+    m_refreshBtn = new ElaPushButton(QStringLiteral("刷新"), topBar);
+    m_refreshBtn->setFixedSize(80, 36);
 
-      top_layout->addWidget(title);
-      top_layout->addStretch();
-      top_layout->addWidget(user_search_edit_);
-      top_layout->addWidget(search_btn_);
+    topLayout->addWidget(title);
+    topLayout->addStretch();
+    topLayout->addWidget(m_searchEdit);
+    topLayout->addWidget(m_refreshBtn);
 
-      main_layout_->addWidget(top_bar);
+    root->addWidget(topBar);
 
-      refresh_btn_ = new ElaPushButton("刷新", top_bar);
-      refresh_btn_->setFixedSize(90, 36);
+    // ===== 订单列表容器（一行一个订单卡片）=====
+    m_listContainer = new QWidget(content);
+    m_listLayout = new QVBoxLayout(m_listContainer);
+    m_listLayout->setContentsMargins(0, 0, 0, 0);
+    m_listLayout->setSpacing(12);
+    root->addWidget(m_listContainer);
 
-      top_layout->addWidget(title);
-      top_layout->addStretch();
-      top_layout->addWidget(refresh_btn_);
+    // 让内容从顶部开始排（空白永远在下面）
+    root->addStretch(1);
 
-      main_layout_->addWidget(top_bar);
+    // 把 content 挂到 ElaScrollPage 内部滚动体系
+    addCentralWidget(content, /*isWidgetResizeable=*/true, /*isVerticalGrabGesture=*/true);
 
-      //================= 表头行 =================
-      QWidget* header = new QWidget(center_widget_);
-      header->setFixedHeight(36);
-      QHBoxLayout* header_layout = new QHBoxLayout(header);
-      header_layout->setContentsMargins(12, 0, 12, 0);
-      header_layout->setSpacing(20);
+    // 内容少时也贴顶（防止被居中）
+    if (auto* sa = this->findChild<ElaScrollArea*>()) {
+        sa->setAlignment(Qt::AlignTop);
+    }
 
-      ElaText* h_order  = new ElaText("订单号", header);
-      ElaText* h_user   = new ElaText("用户名", header);
-      ElaText* h_amount = new ElaText("总金额", header);
-      ElaText* h_time   = new ElaText("下单时间", header);
+    // ===== 搜索：防抖过滤 + 回车给后端 =====
+    m_searchDebounce = new QTimer(this);
+    m_searchDebounce->setSingleShot(true);
+    m_searchDebounce->setInterval(200);
 
-      h_order->setFixedWidth(120);
-      h_user->setFixedWidth(120);
-      h_amount->setFixedWidth(100);
+    connect(m_searchEdit, &ElaLineEdit::textChanged, this, &OrderInfo_Page::onSearchTextChanged);
+    connect(m_searchDebounce, &QTimer::timeout, this, &OrderInfo_Page::applyFilterNow);
+    connect(m_searchEdit, &ElaLineEdit::returnPressed, this, &OrderInfo_Page::onSearchReturnPressed);
+    connect(m_refreshBtn, &ElaPushButton::clicked, this, &OrderInfo_Page::onRefresh);
 
-      header_layout->addWidget(h_order);
-      header_layout->addWidget(h_user);
-      header_layout->addWidget(h_amount);
-      header_layout->addWidget(h_time);
-      header_layout->addStretch();
+    // ===== 演示：添加示例订单数据 =====
+    QList<Order> demoOrders;
 
-      main_layout_->addWidget(header);
+    Order o1;
+    o1.order_id = 1;
+    o1.user_id = 2;
+    o1.user_name = QStringLiteral("张三");
+    o1.total_amount = 88.00;
+    o1.create_time = QDateTime::fromString("2025-01-03 12:45:30", "yyyy-MM-dd hh:mm:ss");
+    o1.comment = QStringLiteral("味道很好，下次还来");
 
-      // ================= 订单列表 =================
-      QWidget* list_widget = new QWidget(center_widget_);
-      order_list_layout_ = new QVBoxLayout(list_widget);
-      order_list_layout_->setSpacing(6);
-      order_list_layout_->setContentsMargins(0, 0, 0, 0);
+    // 添加订单菜品
+    Dish d1;
+    d1.dish_id = 1;
+    d1.name = QStringLiteral("宫保鸡丁");
+    d1.price = 28.00;
+    d1.category = QStringLiteral("川菜");
+    d1.rating = 4.8;
+    d1.url = QStringLiteral(":/Image/vvan.jpg");
+    d1.description = QStringLiteral("经典川菜，微辣香脆");
+    o1.dishes.append(d1);
+    o1.dishes.append(d1); // 同一道菜点了两份
 
-      main_layout_->addWidget(list_widget);
-      main_layout_->addStretch();
+    Order o2;
+    o2.order_id = 2;
+    o2.user_id = 3;
+    o2.user_name = QStringLiteral("李四");
+    o2.total_amount = 56.00;
+    o2.create_time = QDateTime::fromString("2025-01-05 18:20:10", "yyyy-MM-dd hh:mm:ss");
+    o2.comment = "";
+    o2.dishes.append(d1);
 
-      addCentralWidget(center_widget_, true, true, 0);
+    Order o3;
+    o3.order_id = 3;
+    o3.user_id = 2;
+    o3.user_name = QStringLiteral("张三");
+    o3.total_amount = 64.00;
+    o3.create_time = QDateTime::fromString("2025-01-06 19:05:00", "yyyy-MM-dd hh:mm:ss");
+    o3.comment = QStringLiteral("速度快");
+    o3.dishes.append(d1);
 
-      drawOrderList();
+    demoOrders << o1 << o2 << o3 ;
 
-      // 查询
-      connect(search_btn_, &ElaPushButton::clicked, this,&OrderInfo_Page::onSearch);
-
-      // 回车触发查询（很加分）
-      connect(user_search_edit_, &QLineEdit::returnPressed, this,&OrderInfo_Page::onSearch);
-
-      // 刷新
-      connect(refresh_btn_, &ElaPushButton::clicked, this, &OrderInfo_Page::onRefresh);
-
+    setOrderList(demoOrders);
 }
 
-void OrderInfo_Page::onSearch()
+OrderInfo_Page::~OrderInfo_Page() {
+}
+
+void OrderInfo_Page::onSearchTextChanged(const QString& text)
 {
-    emit queryOrderByUser(user_search_edit_->text());
+    m_keyword = text.trimmed();
+    m_searchDebounce->start();
+}
+
+void OrderInfo_Page::setOrderList(const QList<Order>& orders)
+{
+    m_allOrders = orders;
+    applyFilterNow();
+}
+
+void OrderInfo_Page::onSearchReturnPressed()
+{
+    emit searchRequested(m_keyword); // 后端接口预留：回车再请求服务器
 }
 
 void OrderInfo_Page::onRefresh()
 {
     emit refreshOrderRequested();
+    ElaMessageBar::success(ElaMessageBarType::BottomRight, QStringLiteral("提示"),
+                          QStringLiteral("正在刷新订单列表..."), 1500, this);
 }
 
-
-void OrderInfo_Page::drawOrderList()
+void OrderInfo_Page::applyFilterNow()
 {
-    // 清空旧行
-    QLayoutItem* item;
-    while ((item = order_list_layout_->takeAt(0)) != nullptr) {
-        if (item->widget()) delete item->widget();
-        delete item;
+    QList<Order> show;
+    if (m_keyword.isEmpty()) {
+        show = m_allOrders;
+    } else {
+        for (const auto& order : m_allOrders) {
+            // 搜索订单号、用户名、备注
+            QString orderIdStr = QString::number(order.order_id);
+            if (orderIdStr.contains(m_keyword, Qt::CaseInsensitive) ||
+                order.user_name.contains(m_keyword, Qt::CaseInsensitive) ||
+                order.comment.contains(m_keyword, Qt::CaseInsensitive)) {
+                show.push_back(order);
+            }
+        }
+    }
+    rebuildList(show);
+}
+
+void OrderInfo_Page::onViewOrderDetail(int orderId)
+{
+    // 从订单列表中查找对应订单
+    Order* foundOrder = nullptr;
+    for (auto& order : m_allOrders) {
+        if (order.order_id == orderId) {
+            foundOrder = &order;
+            break;
+        }
     }
 
-    //======== 模拟订单行 ======
-    for (int i = 0; i < 6; ++i) {
-        QWidget* row = new QWidget(this);
-        row->setFixedHeight(48);
-
-        QHBoxLayout* layout = new QHBoxLayout(row);
-        layout->setContentsMargins(12, 0, 12, 0);
-        layout->setSpacing(20);
-
-        ElaText* order_id = new ElaText(QString("#%1").arg(10000 + i), row);
-        ElaText* user     = new ElaText("张三", row);
-        ElaText* amount   = new ElaText("¥56.00", row);
-        ElaText* time     = new ElaText("2025-12-29 11:20", row);
-
-        order_id->setFixedWidth(120);
-        user->setFixedWidth(120);
-        amount->setFixedWidth(100);
-
-        layout->addWidget(order_id);
-        layout->addWidget(user);
-        layout->addWidget(amount);
-        layout->addWidget(time);
-        layout->addStretch();
-
-        order_list_layout_->addWidget(row);
+    if (!foundOrder) {
+        ElaMessageBar::warning(ElaMessageBarType::BottomRight, QStringLiteral("提示"),
+                              QStringLiteral("订单未找到"), 2000, this);
+        return;
     }
+
+    // 显示订单详情对话框
+    auto* dialog = new OrderDetailDialog(this);
+    dialog->setOrder(*foundOrder);
+    dialog->exec();
+    dialog->deleteLater();
 }
 
-
-/*
-void OrderInfo_Page::showNewOrderNotification()
+void OrderInfo_Page::rebuildList(const QList<Order>& orders)
 {
-    ElaMessageBar::success(ElaMessageBarType::BottomRight, "提示", "您有新的订单", 2000, this);
-}
-*/
-OrderInfo_Page::~OrderInfo_Page() {
+    if (!m_listLayout) return;
 
+    // 清空旧卡片
+    while (m_listLayout->count() > 0) {
+        QLayoutItem* it = m_listLayout->takeAt(0);
+        if (!it) break;
+        if (QWidget* w = it->widget()) {
+            w->setParent(nullptr);
+            w->deleteLater();
+        }
+        delete it;
+    }
+
+    if (orders.isEmpty()) {
+        // 空态
+        auto* empty = new ElaText(QStringLiteral("没有找到相关订单"), 14, m_listContainer);
+        empty->setStyleSheet("color:#888888;");
+        empty->setAlignment(Qt::AlignHCenter);
+        m_listLayout->addWidget(empty);
+        return;
+    }
+
+    for (const auto& order : orders) {
+        auto* card = new OrderCard(m_listContainer);
+        card->setOrder(order);
+
+        connect(card, &OrderCard::viewDetailRequested, this, &OrderInfo_Page::onViewOrderDetail);
+
+        m_listLayout->addWidget(card);
+    }
 }

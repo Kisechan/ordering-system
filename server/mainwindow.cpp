@@ -10,6 +10,7 @@
 #include "ElaText.h"
 
 #include "orderinfo_page.h"
+#include "dishmanage_page.h"
 
 #include <QDebug>
 
@@ -52,7 +53,10 @@ void MainWindow::initWindow() {
     order_info_page_ = new OrderInfo_Page(this);
     addPageNode(QStringLiteral("订单管理"), order_info_page_, ElaIconType::Box);
 
-    qDebug()<<"order==ok";
+    dish_manage_page_=new DishManage_Page(this);
+    addPageNode(QStringLiteral("菜品管理"),dish_manage_page_,ElaIconType::House);
+
+
 
 
 }
