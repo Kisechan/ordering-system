@@ -79,6 +79,7 @@ OrderInfo_Page::OrderInfo_Page(QWidget* parent):
     connect(m_searchEdit, &ElaLineEdit::returnPressed, this, &OrderInfo_Page::onSearchReturnPressed);
     connect(m_refreshBtn, &ElaPushButton::clicked, this, &OrderInfo_Page::onRefresh);
 
+    // 注意：！！！订单总金额和具体菜品小计总和没有校准（总金额是直接传过来的，各菜品小计是单价*数量计算）
     // ===== 演示：添加示例订单数据 =====
     QList<Order> demoOrders;
 
@@ -90,7 +91,7 @@ OrderInfo_Page::OrderInfo_Page(QWidget* parent):
     o1.create_time = QDateTime::fromString("2025-01-03 12:45:30", "yyyy-MM-dd hh:mm:ss");
     o1.comment = QStringLiteral("味道很好，下次还来");
 
-    // 添加订单菜品
+    // 添加订单菜品（演示用
     Dish d1;
     d1.dish_id = 1;
     d1.name = QStringLiteral("宫保鸡丁");
@@ -99,8 +100,18 @@ OrderInfo_Page::OrderInfo_Page(QWidget* parent):
     d1.rating = 4.8;
     d1.url = QStringLiteral(":/Image/vvan.jpg");
     d1.description = QStringLiteral("经典川菜，微辣香脆");
-    o1.dishes.append(d1);
-    o1.dishes.append(d1); // 同一道菜点了两份
+
+    OrderDish od1;
+    od1.dish = d1;
+    od1.quantity = 2;           // 点了2份
+    od1.customer_rating = 5.0;  // 客户给5分
+
+    OrderDish od2;
+    od2.dish = d1;
+    od2.quantity = 1;
+    od2.customer_rating = 4.5;
+
+    o1.dishes.append(od1);
 
     Order o2;
     o2.order_id = 2;
@@ -109,7 +120,7 @@ OrderInfo_Page::OrderInfo_Page(QWidget* parent):
     o2.total_amount = 56.00;
     o2.create_time = QDateTime::fromString("2025-01-05 18:20:10", "yyyy-MM-dd hh:mm:ss");
     o2.comment = "";
-    o2.dishes.append(d1);
+    o2.dishes.append(od2);
 
     Order o3;
     o3.order_id = 3;
@@ -118,7 +129,12 @@ OrderInfo_Page::OrderInfo_Page(QWidget* parent):
     o3.total_amount = 64.00;
     o3.create_time = QDateTime::fromString("2025-01-06 19:05:00", "yyyy-MM-dd hh:mm:ss");
     o3.comment = QStringLiteral("速度快");
-    o3.dishes.append(d1);
+
+    OrderDish od3;
+    od3.dish = d1;
+    od3.quantity = 2;
+    od3.customer_rating = 0.0;  // 默认0.0为未评分
+    o3.dishes.append(od3);
 
     demoOrders << o1 << o2 << o3 ;
 

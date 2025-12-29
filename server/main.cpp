@@ -31,6 +31,9 @@ int main(int argc, char *argv[]) {
         qCritical() << "DB init failed:" << r.message;
     }
 
+    MainWindow w;
+    w.show();
+
     return a.exec();
 }
 
