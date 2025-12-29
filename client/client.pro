@@ -40,7 +40,9 @@ SOURCES += \
     Protocol.cpp \
     registerdialog.cpp \
     ResponseParser.cpp \
-    cartmanager.cpp
+    cartmanager.cpp \
+    cartdishcard.cpp \
+    cartpage.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -56,7 +58,9 @@ HEADERS += \
     registerdialog.h \
     ResponseParser.h \
     cartmanager.h \
-    carttype.h
+    carttype.h \
+    cartdishcard.h \
+    cartpage.h
 
 FORMS += \
     mainwindow.ui

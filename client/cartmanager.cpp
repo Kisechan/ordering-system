@@ -50,14 +50,13 @@ void CartManager::addDish(const Dish& dish, int addQty)
     auto it = m_items.find(dish.dish_id);
     if (it == m_items.end()) {
         CartItem ci;
-        ci.dish = dish;     // 存快照，前端展示方便
+        ci.dish = dish;     // 这里仅仅只存一个快照
         ci.qty = addQty;
         m_items.insert(dish.dish_id, ci);
     } else {
         it->qty += addQty;
         if (it->qty < 1) it->qty = 1;
-        // dish 信息如果后端可能变化，你也可以选择更新快照：
-        it->dish = dish;
+        it->dish = dish;   // 后端信息可能变化，更新快照
     }
 
     recalcTotalsAndEmitIfNeeded();
