@@ -3,10 +3,38 @@
 #include <QJsonArray>
 #include <QJsonValue>
 
+
+#include "service/AuthService.h"
+#include "service/DishService.h"
+#include "service/OrderService.h"
+#include "DbManager.h"
+#include "entity/DishCount.h"
+
 Server* Server::server = new Server();
+QSqlDatabase Server::conn;
 
 Server::Server(QObject* parent)
     : QTcpServer(parent) {
+    initConnection();
+}
+
+void Server::initConnection() {
+    db::DbConfig cfg;
+    cfg.odbcConnStr =
+        "DRIVER={MariaDB ODBC 3.2 Driver};"
+        "TCPIP=1;"
+        "SERVER=localhost;"
+        "PORT=3306;"
+        "DATABASE=restaurant;"
+        "UID=root;"
+        "PWD=123456;"
+        "OPTION=3;";
+
+    auto r = db::DbManager::instance().init(cfg);
+    if (!r.isOk()) {
+        qCritical() << "DB init failed:" << r.message;
+    }
+    conn = db::DbManager::instance().db();
 }
 
 Server* Server::getInstance() {
@@ -78,39 +106,62 @@ void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
         QString userName = request["username"].toString();
         QString password = request["password"].toString();
 
-        // TODO: 获取登录响应结果
+        // 获取登录响应结果
+        db::AuthService authService(conn);
+        response = authService.login(userName, password);
 
-        // TODO: 如果登录成功，记录到 userMap
+        // 如果登录成功，记录到 userMap
+        UserSession userSession;
+        QJsonObject data = request["data"].toObject();
+        userSession.userId = data["user_id"].toInt();
+        userSession.username = data["username"].toString();
+        userMap[socket] = userSession;
     } else if (type == "register") {
         QString username = request["username"].toString();
         QString password = request["password"].toString();
 
-        // TODO: 获取注册响应结果
+        // 取注册响应结果
+        db::AuthService authService(conn);
+        response = authService.registerUser(username, password);
     } else if (type == "dish_list") {
-        // TODO: 获取菜品详细信息
+        // 获取菜品详细信息
+        db::DishService dishService(conn);
+        response = dishService.listAll();
     } else if (type == "call_waiter") {
         // 发送呼叫服务员信号
         QString username = userMap[socket].username;
         emit callWaiter(username);
+        response["code"] = 200;
+        response["msg"] = "服务员已收到您的呼叫，请耐心等待~";
     } else if (type == "order_submit") {
         int userId = userMap[socket].userId;
-        QJsonObject dataObj = request["data"].toObject();
-        QJsonArray dishesArray = dataObj["dishes"].toArray();
-
-        QList<int> dishIdList, countList;
-        for (const QJsonValue& v : dishesArray) {
-            QJsonObject dishObj = v.toObject();
-            dishIdList.append(dishObj["dish_id"].toInt());
-            countList.append(dishObj["count"].toInt());
+        QVector<db::DishCount> dishCountList;
+        QJsonArray data = request["data"].toArray();
+        for (QJsonValue v : data) {
+            QJsonObject obj = v.toObject();
+            db::DishCount ds;
+            ds.setDishId(obj["dish_id"].toInt());
+            ds.setCount(obj["count"].toInt());
+            dishCountList.append(ds);
         }
 
-        // TODO: 获取订单提交结果
+        // 获取订单提交结果
+        db::OrderService orderService(conn);
+        response = orderService.submitOrder(userId, dishCountList);
     } else if (type == "order_list") {
-        int uid = userMap[socket].userId;
-        // TODO: 获取订单详细信息
+        int userId = userMap[socket].userId;
+
+        // 获取订单详细信息
+        db::OrderService orderService(conn);
+        response = orderService.listOrdersByUser(userId);
     } else if (type == "order_comment") {
-        int uid = userMap[socket].userId;
-        // TODO: 获取提交评论结果
+        QJsonObject data = request["data"].toObject();
+        int orderId = data["orderId"].toInt();
+        QString comment = data["comment"].toString();
+
+        // 获取提交评论结果
+        db::OrderService orderService(conn);
+        response = orderService.submitComment(orderId, comment);
     } else {
         response["code"] = 401;
         response["msg"] = "未知的请求!";

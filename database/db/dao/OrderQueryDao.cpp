@@ -3,6 +3,8 @@
 #include "JsonUtil.h"
 #include <QJsonArray>
 
+#include <QDateTime>
+
 namespace db {
 
 QJsonObject OrderQueryDao::getOrderHistoryByUser(int userId) const {

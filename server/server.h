@@ -7,6 +7,7 @@
 #include <QJsonDocument>
 #include <QObject>
 #include <QDebug>
+#include <QSqlDatabase>
 
 // 用户会话信息结构
 struct UserSession {
@@ -38,7 +39,11 @@ private:
 
     static Server* server;
 
+    static QSqlDatabase conn;
+
     explicit Server(QObject* parent = nullptr);
+
+    static void initConnection();
 
     void processRequest(QTcpSocket* socket, const QJsonObject& request);
 
