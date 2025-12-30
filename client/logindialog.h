@@ -17,6 +17,8 @@ public:
 
     QString username() const;
     QString password() const;
+    int getUserId() const;
+    QString getUsername() const;
     bool rememberMe() const;
     bool autoLogin() const;
 
@@ -51,4 +53,8 @@ private:
     ElaText*       m_errorText  = nullptr;
     
     NetworkManager* m_networkMgr = nullptr;
+
+private:
+    QString s_username;
+    int s_userId;
 };

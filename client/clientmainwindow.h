@@ -12,7 +12,10 @@ class ClientMainWindow : public ElaWindow
 {
     Q_OBJECT
 public:
-    explicit ClientMainWindow(NetworkManager* networkMgr = nullptr, QWidget* parent = nullptr);
+    explicit ClientMainWindow(NetworkManager* networkMgr = nullptr,
+                              int userId = 0,
+                              QString username = "丰川祥子",
+                              QWidget* parent = nullptr);
     ~ClientMainWindow() override = default;
     
     NetworkManager* networkManager() const { return m_networkMgr; }
@@ -27,4 +30,6 @@ private:
     CartManager* m_cart = nullptr;
     HomePage* m_home = nullptr;
     NetworkManager* m_networkMgr = nullptr;
+    int userId;
+    QString username;
 };

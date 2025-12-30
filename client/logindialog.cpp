@@ -191,6 +191,9 @@ QString LoginDialog::password() const
     return m_passEdit ? m_passEdit->text() : QString();
 }
 
+QString LoginDialog::getUsername() const {return s_username;}
+int LoginDialog::getUserId() const{return s_userId;}
+
 bool LoginDialog::rememberMe() const
 {
     return m_remember && m_remember->isChecked();
@@ -231,6 +234,10 @@ void LoginDialog::onLoginSuccess()
     m_loginBtn->setEnabled(true);
     setErrorText("");
     // 登录成功，关闭对话框
+
+    s_username = username();
+    // s_userId = 返回的用户 Id
+
     accept();
 }
 
