@@ -138,10 +138,19 @@ void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
         QJsonObject data = request["data"].toObject();
         int orderId = data["orderId"].toInt();
         QString comment = data["comment"].toString();
+        QJsonArray dishList = data["data"].toArray();
+        QVector<int> dishIdList;
+        QVector<int> dishRatingList;
+
+        for (QJsonValue v : dishList) {
+            QJsonObject object = v.toObject();
+            dishIdList.append(object["dish_id"].toInt());
+            dishRatingList.append(object["rating"].toInt());
+        }
 
         // 获取提交评论结果
         db::OrderService orderService(conn);
-        response = orderService.submitComment(orderId, comment);
+        response = orderService.submitComment(orderId, comment, dishIdList, dishRatingList);
     } else {
         response["code"] = 401;
         response["msg"] = "未知的请求!";

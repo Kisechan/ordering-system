@@ -8,9 +8,10 @@ class OrderDishDao {
 public:
     explicit OrderDishDao(QSqlDatabase db): db_(std::move(db)) {}
 
-    QJsonObject insertOne(int orderId, int dishId);
+    QJsonObject insertOne(int orderId, int dishId, int count);
     QJsonObject deleteByOrderId(int orderId);
     QJsonObject listDishIdsByOrderId(int orderId) const;
+    QJsonObject updateRating(int orderId, int dishId, int rating);
 
 private:
     QSqlDatabase db_;
