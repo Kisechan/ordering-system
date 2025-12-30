@@ -12,6 +12,7 @@ public:
     QJsonObject insertOrder(int userId, double totalAmount, const QString& comment);
     QJsonObject updateComment(int orderId, const QString& comment);
     QJsonObject listByUser(int userId) const;
+    QJsonObject listAll() const;
 
 private:
     QSqlDatabase db_;
