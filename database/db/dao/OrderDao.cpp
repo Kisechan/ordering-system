@@ -62,4 +62,25 @@ QJsonObject OrderDao::listByUser(int userId) const {
     return makeOk(arr);
 }
 
+QJsonObject OrderDao::listAll() const {
+    QString err;
+    if (!dbIsOpen(db_, &err)) return makeErr(500, err);
+
+    QSqlQuery q(db_);
+    q.prepare(
+        "SELECT order_id, user_id, total_amount, create_time, comment "
+        "FROM t_order "
+        "ORDER BY create_time DESC"
+    );
+
+    if (!q.exec()) return makeErr(500, sqlErr(q));
+
+    QJsonArray arr;
+    while (q.next()) {
+        arr.append(rowToOrderRow(q));
+    }
+    return makeOk(arr);
+}
+
+
 } // namespace db

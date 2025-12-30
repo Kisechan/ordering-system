@@ -12,7 +12,7 @@ public:
 
     QJsonObject submitOrder(int userId, const QVector<DishCount>& dishes);
     QJsonObject listOrdersByUser(int userId) const;
-    QJsonObject submitComment(int orderId, const QString& comment);
+    QJsonObject submitComment(int orderId, const QString& comment, const QVector<int>& dishIdList, const QVector<int>& dishRatingList);
     QJsonObject listAdminOrdersBrief() const;
 
 private:
