@@ -36,12 +36,14 @@ win32: QMAKE_POST_LINK += $$quote(cmd /c copy /y $$shell_path($$PWD/ThirdParty/b
 SOURCES += \
         dishcard.cpp \
         disheditdialog.cpp \
+        dishinordercard.cpp \
         dishmanage_page.cpp \
         main.cpp \
         mainwindow.cpp \
         ordercard.cpp \
         orderdetaildialog.cpp \
         orderinfo_page.cpp \
+        servedialog.cpp \
         server.cpp \
         servicerequest_page.cpp \
         servicerequestcard.cpp
@@ -49,12 +51,15 @@ SOURCES += \
 HEADERS += \
         dishcard.h \
         disheditdialog.h \
+        dishinordercard.h \
         dishmanage_page.h \
         mainwindow.h \
         ordercard.h \
         orderdetaildialog.h \
         orderinfo_page.h \
+        servedialog.h \
         server.h \
+        servicerequest.h \
         servicerequest_page.h \
         servicerequestcard.h
 

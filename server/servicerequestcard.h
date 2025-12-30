@@ -4,25 +4,7 @@
 
 #include <QWidget>
 #include <QString>
-
-// 服务请求状态枚举
-enum class ServiceRequestStatus {
-    Pending,      // 待完成
-    Processing    // 正在处理
-};
-
-// 服务请求结构
-struct ServiceRequest {
-    int request_id;              // 请求ID
-    QString customer_name;       // 客户名
-    ServiceRequestStatus status; // 状态
-    QString create_time;         // 创建时间
-
-    ServiceRequest()
-        : request_id(0)
-        , status(ServiceRequestStatus::Pending)
-    {}
-};
+#include "servicerequest.h"
 
 
 class ElaText;
@@ -34,24 +16,26 @@ class ServiceRequestCard : public QWidget
 public:
     explicit ServiceRequestCard(QWidget* parent = nullptr);
 
-    void setRequest(const ServiceRequest& request);
-    ServiceRequest getRequest() const { return m_request; }
+    void setTableInfo(const TableInfo& table);
+    TableInfo getTableInfo() const { return m_table; }
 
 signals:
-    void processRequested(int requestId);   // 点击"处理"按钮 不需要与后端交互
-    void completeRequested(int requestId);  // 点击"完成"按钮 不需要与厚度那交互
+    void serveRequested(int tableNumber);      // 点击"上菜"按钮
+    void completeRequested(int tableNumber);   // 点击"完成"按钮
+    void handleCallRequested(int tableNumber); // 点击"处理呼叫"按钮
 
 private:
     void refreshUI();
 
 private:
-    ServiceRequest m_request;
+    TableInfo m_table;
 
-    ElaText* m_customerLabel = nullptr;// 名
-    ElaText* m_statusLabel = nullptr;// 状态
-    ElaText* m_timeLabel = nullptr;// 时间
-    ElaPushButton* m_processBtn = nullptr;// 处理按钮
-    ElaPushButton* m_completeBtn = nullptr;// 完成按钮
+    ElaText* m_tableLabel = nullptr;
+    ElaText* m_statusLabel = nullptr;
+    ElaText* m_callLabel = nullptr;          // 呼叫提示
+    ElaPushButton* m_serveBtn = nullptr;     // 上菜按钮
+    ElaPushButton* m_completeBtn = nullptr;  // 完成按钮
+    ElaPushButton* m_handleCallBtn = nullptr; // 处理呼叫按钮
 };
 
 #endif // SERVICEREQUESTCARD_H
