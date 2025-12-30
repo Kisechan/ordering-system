@@ -169,7 +169,7 @@ LoginDialog::LoginDialog(NetworkManager* networkMgr, QWidget* parent)
 
     connect(m_userEdit, &ElaLineEdit::returnPressed, this, &LoginDialog::onLoginClicked);
     connect(m_passEdit, &ElaLineEdit::returnPressed, this, &LoginDialog::onLoginClicked);
-    
+
     // 连接 NetworkManager 信号
     if (m_networkMgr) {
         connect(m_networkMgr, &NetworkManager::loginSuccess, this, &LoginDialog::onLoginSuccess);

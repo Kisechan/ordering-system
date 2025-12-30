@@ -61,7 +61,7 @@ ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, int tmpuserId, QS
 
 
     // 购物车页面：展示已点菜品及结算
-    auto* cartPage = new CartPage(m_cart, m_networkMgr, this);
+    auto* cartPage = new CartPage(m_cart, this);
     addPageNode(QStringLiteral("购物车"), cartPage, ElaIconType::CartShopping);
 
     connect(cartPage, &CartPage::orderRequested, this, [this](const OrderDraft& draft){
@@ -106,7 +106,7 @@ ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, int tmpuserId, QS
                 if (nodeType != ElaNavigationType::FooterNode) return;
 
                 if (nodeKey == callWaiterKey) {
-                    // TODO: m_networkMgr->callWaiter(userId);
+                    // 发送桌号，用户名，用户 ID 以呼叫服务员（注意，不需要）
 
                     ElaMessageBar::success(ElaMessageBarType::TopRight,
                                            QStringLiteral("提示"),
