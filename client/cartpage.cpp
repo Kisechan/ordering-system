@@ -1,4 +1,4 @@
-#include "CartPage.h"
+#include "cartpage.h"
 
 #include <QVBoxLayout>
 #include <QWidget>
@@ -11,7 +11,7 @@
 #include "ElaPushButton.h"
 #include "ElaMessageBar.h"
 
-#include "CartDishCard.h"
+#include "cartdishcard.h"
 #include "NetworkManager.h"
 
 CartPage::CartPage(CartManager* cart, NetworkManager* networkMgr, QWidget* parent)
@@ -34,7 +34,7 @@ CartPage::CartPage(CartManager* cart, NetworkManager* networkMgr, QWidget* paren
     root->addWidget(m_listContainer);
 
     // 呼叫服务员按钮
-    m_callBtn = new ElaPushButton(QStringLiteral("呼叫服务员（下单）"), content);
+    m_callBtn = new ElaPushButton(QStringLiteral("下单"), content);
 
     QFont f = m_callBtn->font();
     f.setPixelSize(19);

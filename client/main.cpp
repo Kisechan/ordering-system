@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
     LoginDialog login(networkMgr);
     if (login.exec() == QDialog::Accepted) {
-        auto* w = new ClientMainWindow(networkMgr, login.getUserId(), login.getUsername());
+        auto* w = new ClientMainWindow(networkMgr, login.getUserId(), login.getUsername(), -1);
         w->show();
         return a.exec();
     }

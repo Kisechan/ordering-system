@@ -1,47 +1,55 @@
-#include "RateDialog.h"
+#include "ReviewDialog.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QWidget>
 
-#include "ElaScrollArea.h"
 #include "ElaText.h"
-#include "ElaPushButton.h"
 #include "ElaPlainTextEdit.h"
+#include "ElaScrollArea.h"
+#include "ElaPushButton.h"
 
 #include "RateDishCard.h"
 
-RateDialog::RateDialog(int orderId,
-                       double totalAmount,
-                       const QString& time,
-                       const QList<CartItem>& items,
-                       const QString& presetComment,
-                       const QMap<int, int>& presetRatings,
-                       QWidget* parent)
+ReviewDialog::ReviewDialog(int orderId,
+                           double totalAmount,
+                           const QString& time,
+                           const QList<CartItem>& items,
+                           const QString& presetComment,
+                           QWidget* parent)
     : QDialog(parent),
       m_orderId(orderId),
       m_totalAmount(totalAmount),
       m_time(time),
-      m_items(items),
-      m_presetComment(presetComment),
-      m_presetRatings(presetRatings)
+      m_items(items)
 {
-    setWindowTitle(QStringLiteral("订单评价"));
-    resize(560, 680);  // 增加高度以容纳评论区
+    setWindowTitle(QStringLiteral("评价订单"));
+    resize(600, 800);
+
     buildUI();
+
+    if (m_edit) {
+        m_edit->setPlainText(presetComment);
+    }
 }
 
-QString RateDialog::comment() const
+QString ReviewDialog::comment() const
 {
-    return m_edit ? m_edit->toPlainText().trimmed().left(200) : QString();
+    return m_edit ? m_edit->toPlainText().trimmed() : QString();
 }
 
-void RateDialog::buildUI()
+QMap<int, int> ReviewDialog::ratings() const
+{
+    return m_ratings;
+}
+
+void ReviewDialog::buildUI()
 {
     auto* root = new QVBoxLayout(this);
     root->setContentsMargins(16, 16, 16, 16);
     root->setSpacing(12);
 
-    // 顶部订单信息（信息卡片 + 价格数字橘色）
+    // ===== 1) 顶部订单信息卡片 =====
     {
         auto* infoCard = new QWidget(this);
         infoCard->setObjectName("OrderInfoCard");
@@ -81,7 +89,7 @@ void RateDialog::buildUI()
         root->addWidget(infoCard);
     }
 
-    // 评论区（限200字符）
+    // ===== 2) 评论区（也放进一个小卡片里更整齐）=====
     {
         auto* commentCard = new QWidget(this);
         commentCard->setObjectName("CommentCard");
@@ -98,74 +106,71 @@ void RateDialog::buildUI()
         lay->setContentsMargins(16, 12, 16, 12);
         lay->setSpacing(8);
 
-        auto* title = new ElaText(QStringLiteral("订单评语（限200字）"), 17, commentCard);
+        auto* title = new ElaText(QStringLiteral("评论"), 17, commentCard);
         title->setStyleSheet("color:#222222;");
         lay->addWidget(title);
 
         m_edit = new ElaPlainTextEdit(commentCard);
-        m_edit->setPlaceholderText(QStringLiteral("请输入您对本次订单的评价（可留空）"));
-        m_edit->setMinimumHeight(80);
-        m_edit->setMaximumHeight(100);
-        
-        // 预置评论
-        if (!m_presetComment.isEmpty()) {
-            m_edit->setPlainText(m_presetComment);
-        }
-        
+        m_edit->setPlaceholderText(QStringLiteral("请输入评论（可留空）"));
+        m_edit->setMinimumHeight(110);
         lay->addWidget(m_edit);
 
         root->addWidget(commentCard);
     }
 
-    // 下方 scrollball - 菜品评分列表
-    m_scroll = new ElaScrollArea(this);
-    m_scroll->setWidgetResizable(true);
-    m_scroll->setAlignment(Qt::AlignTop);
+    // ===== 3) 下方 scrollball：菜品评分列表 =====
+    {
+        m_scroll = new ElaScrollArea(this);
+        m_scroll->setWidgetResizable(true);
+        m_scroll->setAlignment(Qt::AlignTop);
 
-    m_listContainer = new QWidget(m_scroll);
-    m_listLayout = new QVBoxLayout(m_listContainer);
-    m_listLayout->setContentsMargins(0, 0, 0, 0);
-    m_listLayout->setSpacing(12);
+        m_listContainer = new QWidget(m_scroll);
+        m_listLayout = new QVBoxLayout(m_listContainer);
+        m_listLayout->setContentsMargins(0, 0, 0, 0);
+        m_listLayout->setSpacing(12);
 
-    // 构造卡片列表
-    for (const auto& it : m_items) {
-        auto* card = new RateDishCard(m_listContainer);
-        card->setItem(it);
+        for (const auto& it : m_items) {
+            auto* card = new RateDishCard(m_listContainer);
+            card->setItem(it);
 
-        // 使用预设评分（如果有），否则默认 5 分
-        int presetRating = m_presetRatings.value(it.dish.dish_id, 5);
-        card->setRating(presetRating);
-        m_ratings[it.dish.dish_id] = presetRating;
+            // 默认 5 分（你也可以改成 3）
+            m_ratings[it.dish.dish_id] = 5;
 
-        connect(card, &RateDishCard::ratingChanged, this,
-                [this](int dishId, int rating){
-                    m_ratings[dishId] = rating;
-                });
+            connect(card, &RateDishCard::ratingChanged, this,
+                    [this](int dishId, int rating){
+                        m_ratings[dishId] = rating;
+                    });
 
-        m_listLayout->addWidget(card);
+            m_listLayout->addWidget(card);
+        }
+        m_listLayout->addStretch(1);
+
+        m_scroll->setWidget(m_listContainer);
+        root->addWidget(m_scroll, 1);
     }
-    m_listLayout->addStretch(1);
 
-    m_scroll->setWidget(m_listContainer);
-    root->addWidget(m_scroll, 1);
-
-    // 底部按钮（自适应宽度：用一行 layout + 两边 stretch）
+    // ===== 4) 底部按钮 =====
     {
         auto* row = new QHBoxLayout();
         row->setContentsMargins(0, 0, 0, 0);
 
-        auto* ok = new ElaPushButton(QStringLiteral("提交评价"), this);
-        ok->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        auto* cancel = new ElaPushButton(QStringLiteral("取消"), this);
+        cancel->setMinimumHeight(40);
+
+        auto* ok = new ElaPushButton(QStringLiteral("提交"), this);
         ok->setMinimumHeight(40);
 
         row->addStretch(1);
+        row->addWidget(cancel);
+        row->addSpacing(10);
         row->addWidget(ok);
-        row->addStretch(1);
 
         root->addLayout(row);
 
+        connect(cancel, &ElaPushButton::clicked, this, &QDialog::reject);
         connect(ok, &ElaPushButton::clicked, this, [this](){
             accept();
         });
     }
 }
+

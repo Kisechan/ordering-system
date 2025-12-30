@@ -14,6 +14,7 @@ public:
     explicit RateDishCard(QWidget* parent = nullptr);
 
     void setItem(const CartItem& item);
+    void setRating(int rating);  // 设置初始评分
     int  rating() const { return m_rating; }
     int  dishId() const { return m_item.dish.dish_id; }
 

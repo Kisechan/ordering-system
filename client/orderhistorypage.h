@@ -36,6 +36,7 @@ private:
     QList<QString> m_times;
     QList<QString> m_comments;
     QList<QList<CartItem>> m_orderItems;
+    QList<QMap<int, int>> m_dishRatings;  // 每个订单的菜品评分 (dish_id -> rating)
 
 private:
     NetworkManager* m_networkMgr = nullptr;

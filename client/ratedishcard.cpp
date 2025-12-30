@@ -89,6 +89,13 @@ void RateDishCard::setItem(const CartItem& item)
     refreshUI();
 }
 
+void RateDishCard::setRating(int rating)
+{
+    m_rating = qBound(1, rating, 5);
+    if (m_slider) m_slider->setValue(m_rating);
+    if (m_rateText) m_rateText->setText(QStringLiteral("评分：%1").arg(m_rating));
+}
+
 void RateDishCard::onSliderChanged(int v)
 {
     m_rating = v;

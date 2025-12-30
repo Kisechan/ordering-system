@@ -48,7 +48,8 @@ SOURCES += \
     commentdialog.cpp \
     ratedishcard.cpp \
     ratedialog.cpp \
-    accountpage.cpp
+    accountpage.cpp \
+    reviewdialog.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -72,7 +73,8 @@ HEADERS += \
     commentdialog.h \
     ratedishcard.h \
     ratedialog.h \
-    accountpage.h
+    accountpage.h \
+    reviewdialog.h
 
 FORMS += \
     mainwindow.ui

@@ -1,6 +1,5 @@
 #pragma once
 
-
 class HomePage;
 class NetworkManager;
 #include "cartmanager.h"
@@ -15,6 +14,7 @@ public:
     explicit ClientMainWindow(NetworkManager* networkMgr = nullptr,
                               int userId = 0,
                               QString username = "丰川祥子",
+                              int tableNumber = -1,
                               QWidget* parent = nullptr);
     ~ClientMainWindow() override = default;
     
@@ -32,4 +32,5 @@ private:
     NetworkManager* m_networkMgr = nullptr;
     int userId;
     QString username;
+    int tableNumber; // 桌号，需要请求服务器得到
 };
