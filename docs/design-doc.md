@@ -9,7 +9,7 @@
 | user_id       | INT         | PRIMARY KEY, AUTO_INCREMENT | 用户唯一ID (主键) |
 | username      | VARCHAR(50) | NOT NULL, UNIQUE            | 用户账号          |
 | password      | VARCHAR(64) | NOT NULL                    | 登录密码          |
-| register_time | DATETIME    | -                           | 注册时间          |
+| register_time | DATETIME    | ==NOT NULL==                | 注册时间          |
 
 ### 1.2 菜品表 (`t_dish`)
 
@@ -20,12 +20,10 @@
 | `dish_id`     | INT           | PRIMARY KEY, AUTO_INCREMENT | 菜品ID             |
 | `name`        | VARCHAR(50)   | NOT NULL                    | 菜品名称           |
 | `price`       | DECIMAL(10,2) | NOT NULL                    | 价格               |
-| `category`    | VARCHAR(20)   | -                           | 菜系 (川菜/粤菜等) |
-| `rating`      | FLOAT         | DEFAULT 5.0                 | 好评度             |
+| `category`    | VARCHAR(20)   | ==NOT NULL==                | 菜系 (川菜/粤菜等) |
+| ~~`rating`~~  | ~~FLOAT~~     | ~~DEFAULT 5.0~~             | ~~好评度~~         |
 | `url`         | VARCHAR(50)   | NOT NULL                    | 图片路径           |
-| `description` | VARCHAR(200)  | -                           | 详细描述           |
-
-
+| `description` | VARCHAR(200)  | ==NOT NULL DEFAULT ''==     | 详细描述           |
 
 ### 1.3 订单主表 (`t_order`)
 
@@ -35,19 +33,21 @@
 | -------------- | ------------- | --------------------------- | ------------ |
 | `order_id`     | INT           | PRIMARY KEY, AUTO_INCREMENT | 订单号       |
 | `user_id`      | INT           | NOT NULL                    | 下单用户 ID  |
-| `total_amount` | DECIMAL(10,2) | -                           | 总金额       |
-| `create_time`  | DATETIME      | -                           | 下单时间     |
+| `total_amount` | DECIMAL(10,2) | ==NOT NULL==                | 总金额       |
+| `create_time`  | DATETIME      | ==NOT NULL==                | 下单时间     |
 | `comment`      | VARCHAR(200)  | -                           | 订单评价内容 |
 
 ### 1.4 订单-菜品关联表 (`t_order_dish`)
 
 存储订单中包含哪些菜品
 
-| 字段名     | 类型 | 约束                        | 说明   |
-| ---------- | ---- | --------------------------- | ------ |
-| `id`       | INT  | PRIMARY KEY, AUTO_INCREMENT | ID     |
-| `order_id` | INT  | NOT NULL                    | 订单ID |
-| `dish_id`  | INT  | NOT NULL                    | 菜品ID |
+| 字段名     | 类型    | 约束                        | 说明         |
+| ---------- | ------- | --------------------------- | ------------ |
+| `id`       | INT     | PRIMARY KEY, AUTO_INCREMENT | ID           |
+| `order_id` | INT     | NOT NULL                    | 订单ID       |
+| `dish_id`  | INT     | NOT NULL                    | 菜品ID       |
+| `count`    | ==INT== | ==NOT NULL==                | ==订购数量== |
+| `rating`   | ==INT== | ==-==                       | ==顾客评分== |
 
 ---
 
@@ -69,13 +69,14 @@
 
 ### 响应格式
 
-**登陆成功**
+==**登陆成功**==
 
 ```json
 {
   "code": 200,
   "data": {
     "user_id": 1 
+    "username": "xyz"
   }
   "msg": "",
 }
@@ -159,7 +160,7 @@
 
 ### 响应格式
 
-**获取菜品详细信息成功**
+==**获取菜品详细信息成功**==
 
 ```json
 {
@@ -170,7 +171,7 @@
         "name": "宫保鸡丁",
         "price": 28.00,
         "category": "川菜",
-        "rating": 4.8,
+        "rating": 4.8, // 后端没有直接存储此数据，需要先计算在交给前端！！！！！！！
         "url": "/img/gongbao.jpg",
         "description": "经典川菜，微辣香脆"
         },
@@ -225,11 +226,11 @@
     "dishes": [
       {
         "dish_id": 1,
-        "count": 2
+        "count": 2,
       },
       {
         "dish_id": 3,
-        "count": 1
+        "count": 1,
       }
     ]
   }
@@ -265,7 +266,7 @@
 
 ### 响应格式
 
-**获取成功**
+==**获取成功**==
 
 ```json
 {
@@ -282,13 +283,15 @@
           "dish_id": 1,
           "name": "宫保鸡丁",
           "price": 28.00,
-          "count": 2
+          "count": 2,
+          "rating": 5 // 新增了顾客自己对每道菜品的评分，可能为空！！！！！！！
         },
         {
           "dish_id": 3,
           "name": "鱼香肉丝",
           "price": 32.00,
-          "count": 1
+          "count": 1,
+          "rating": 4
         }
       ]
     },
@@ -302,7 +305,8 @@
           "dish_id": 2,
           "name": "白切鸡",
           "price": 32.00,
-          "count": 1
+          "count": 1,
+          "rating": 3
         }
       ]
     }
@@ -312,14 +316,24 @@
 
 ## 6.2 提交评价
 
-### 请求格式
+### ==请求格式==
 
 ```json
 {
   "type": "order_comment",
   "data": {
     "order_id": 10001,
-    "comment": "菜品新鲜，配送及时，整体体验很好"
+    "comment": "菜品新鲜，配送及时，整体体验很好"，
+    "dishes": [
+      {
+        "dish_id": 1,
+        "rating": 5
+      },
+      {
+        "dish_id": 3,
+        "rating": 4
+      }
+    ] // 新增每道菜的id和顾客对每道菜的rating ！！！！
   }
 }
 ```
@@ -334,13 +348,15 @@
   "data": {}
 ```
 
+----
+
 # 7 菜品信息管理界面
 
-## 7.1 查询菜品
+## 7.1 ==查询菜品==
 
 ### 请求格式
 
-直接调函数
+直接调函数 空参
 
 ### 响应格式
 
@@ -353,7 +369,7 @@
         "name": "宫保鸡丁",
         "price": 28.00,
         "category": "川菜",
-        "rating": 4.8,
+        "rating": 4.8, // 注意这里需要计算一下！！！！！！
         "url": "/img/gongbao.jpg",
         "description": "经典川菜，微辣香脆"
         },
@@ -371,35 +387,56 @@
 }
 ```
 
-## 7.2 新增菜品
+## 7.2 ==新增菜品==
 
 ### 请求格式
 
-直接调函数
+直接调函数，给出
+
+```json
+{
+  "name": "xyz",
+  "price": 10.2,
+  "category": "川菜",
+  "url": "/var/www",
+  "description": "这是一条描述。"
+}
+```
 
 ### 响应格式
 
-是否增加成功
+菜品的dish_id int,失败返回-1
 
-## 7.3 修改菜品
+## 7.3 ==修改菜品==
 
 ### 请求格式
 
-直接调函数
+直接调函数，给出 QJsonObject
+
+```json
+{
+  "dish_id": 1,
+  "name": "xyz",
+  "price": 10.2,
+  "category": "川菜",
+  "url": "/var/www",
+  "description": "这是一条描述。"
+}
+```
 
 ### 响应格式
 
-是否修改成功
+是否修改成功(bool)
 
-## 7.4 删除菜品
+## 7.4 ==删除菜品==
 
 ### 请求格式
 
-直接调函数
+直接调函数，给出 dish_id int
 
 ### 响应格式
 
-是否删除成功
+是否删除成功(bool)
 
 # 8 服务端订单记录页面
 
@@ -431,6 +468,41 @@
       "total_amount": 56.00,
       "create_time": "2025-01-05 18:20:10",
       "comment": ""
+    }
+  ]
+}
+```
+
+## ==8.2 查询所有订单简要信息==
+
+### 请求格式
+
+直接调函数，给出order_id int
+
+### 响应格式
+
+```json
+{
+  "code": 200,
+  "msg": "",
+  "data": [
+    {
+      "name": "菜品名字",
+      "category": "菜品的种类",
+      "description": "菜品描述",
+      "url": "菜品图片路径",
+      "price": 23.5,
+      "count": 2,
+      "rating": 5
+    },
+    {
+      "name": "菜品2名字",
+      "category": "菜品2的种类",
+      "description": "菜品2描述",
+      "url": "菜品2图片路径",
+      "price": 43.0,
+      "count": 1,
+      "rating": 2
     }
   ]
 }
