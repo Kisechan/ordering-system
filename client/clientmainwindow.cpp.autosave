@@ -15,10 +15,9 @@
 #include "placeholderpage.h"
 #include "ElaNavigationBar.h"
 #include "ElaInteractiveCard.h"
-#include "NetworkManager.h"
 
-ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, QWidget* parent)
-    : ElaWindow(parent), m_networkMgr(networkMgr)
+ClientMainWindow::ClientMainWindow(QWidget* parent)
+    : ElaWindow(parent)
 {
     QFont f = font();
     f.setPointSize(20);
@@ -46,7 +45,7 @@ ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, QWidget* parent)
 
     // 点餐页面：可滚动菜品展示
     m_cart = new CartManager(this);
-    m_home = new HomePage(m_networkMgr, this);
+    m_home = new HomePage(this);
     addPageNode(QStringLiteral("点餐"), m_home, ElaIconType::House);
 
     connect(m_home, &HomePage::addToCartRequested,
@@ -111,14 +110,9 @@ void ClientMainWindow::contextMenuEvent(QContextMenuEvent* e)
 
 void ClientMainWindow::hardRefresh()
 {
-    // 先创建并 show 新窗口，避免“最后一个窗口关闭 -> 程序退出”
     auto* w = new ClientMainWindow(nullptr);
     w->setAttribute(Qt::WA_DeleteOnClose);
     w->show();
-
-    // 如果你想保留原窗口位置/大小，可以加：
     w->setGeometry(this->geometry());
-
-    // 再关闭当前窗口
-    this->close(); // 如果你也希望自动释放：在构造里或这里给 this 设置 WA_DeleteOnClose
+    this->close(); 
 }

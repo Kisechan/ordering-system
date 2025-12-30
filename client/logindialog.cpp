@@ -12,8 +12,6 @@
 #include "ElaPushButton.h"
 #include "ElaText.h"
 #include "ElaImageCard.h"
-
-// 需要你已把 RegisterDialog 加入工程
 #include "registerdialog.h"
 #include "NetworkManager.h"
 

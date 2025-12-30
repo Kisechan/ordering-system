@@ -5,6 +5,8 @@ class HomePage;
 class NetworkManager;
 #include "cartmanager.h"
 #include "ElaWindow.h"
+#include <qtoolbutton.h>
+#include <QContextMenuEvent>
 
 class ClientMainWindow : public ElaWindow
 {
@@ -14,6 +16,12 @@ public:
     ~ClientMainWindow() override = default;
     
     NetworkManager* networkManager() const { return m_networkMgr; }
+
+private:
+    void hardRefresh();
+
+protected:
+    void contextMenuEvent(QContextMenuEvent* e) override;
 
 private:
     CartManager* m_cart = nullptr;
