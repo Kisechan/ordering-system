@@ -80,7 +80,18 @@ void Server::disconnected() {
 void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
     QString type = request["type"].toString();
     QJsonObject response;
+    
+    // 获取当前线程的数据库连接（线程安全）
     QSqlDatabase conn = db::DbManager::instance().db();
+    
+    // 检查数据库连接是否有效
+    if (!conn.isValid() || !conn.isOpen()) {
+        qWarning() << "[Server] Database connection failed for thread" << QThread::currentThread();
+        response["code"] = 500;
+        response["msg"] = "服务器数据库连接失败";
+        sendJson(socket, response);
+        return;
+    }
 
     if (type == "login") {
         QString userName = request["username"].toString();
@@ -91,11 +102,16 @@ void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
         response = authService.login(userName, password);
 
         // 如果登录成功，记录到 userMap
-        UserSession userSession;
-        QJsonObject data = request["data"].toObject();
-        userSession.userId = data["user_id"].toInt();
-        userSession.username = data["username"].toString();
-        userMap[socket] = userSession;
+        if (response["code"].toInt() == 200) {
+            UserSession userSession;
+            if (response.contains("data")) {
+                QJsonObject data = response["data"].toObject();
+                userSession.userId = data["user_id"].toInt();
+                userSession.username = data["username"].toString();
+                userMap[socket] = userSession;
+                qDebug() << "[Server] User logged in: " << userSession.username << " ID: " << userSession.userId;
+            }
+        }
     } else if (type == "register") {
         QString username = request["username"].toString();
         QString password = request["password"].toString();

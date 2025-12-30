@@ -8,6 +8,7 @@
 #include <QObject>
 #include <QDebug>
 #include <QSqlDatabase>
+#include <QThread>
 
 // 用户会话信息结构
 struct UserSession {
