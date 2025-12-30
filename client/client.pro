@@ -42,7 +42,10 @@ SOURCES += \
     ResponseParser.cpp \
     cartmanager.cpp \
     cartdishcard.cpp \
-    cartpage.cpp
+    cartpage.cpp \
+    orderhistorypage.cpp \
+    ordercard.cpp \
+    commentdialog.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -60,7 +63,10 @@ HEADERS += \
     cartmanager.h \
     carttype.h \
     cartdishcard.h \
-    cartpage.h
+    cartpage.h \
+    orderhistorypage.h \
+    ordercard.h \
+    commentdialog.h
 
 FORMS += \
     mainwindow.ui
