@@ -46,7 +46,7 @@ OrderCard::OrderCard(QWidget* parent)
     m_createTimeText->setFixedWidth(150);
     root->addWidget(m_createTimeText);
 
-    // 备注
+    // 评论
     m_commentText = new ElaText("", 14, this);
     m_commentText->setStyleSheet("color:#888888;");
     root->addWidget(m_commentText, 1);
@@ -103,6 +103,20 @@ void OrderCard::refreshUI()
     }
 
     if (m_commentText) {
-        m_commentText->setText(m_order.comment.isEmpty() ? QStringLiteral("无备注") : m_order.comment);
+        QString fullComment = m_order.comment.isEmpty() ? QStringLiteral("无备注") : m_order.comment;
+
+        // 设置字数限制，超过20个字符用省略号
+        const int maxLength = 20;
+        QString displayText = fullComment;
+
+        if (fullComment.length() > maxLength) {
+            displayText = fullComment.left(maxLength) + "...";
+            // 设置toolTip显示完整内容
+            m_commentText->setToolTip(fullComment);
+        } else {
+            m_commentText->setToolTip(""); // 清除tooltip
+        }
+
+        m_commentText->setText(displayText);
     }
 }
