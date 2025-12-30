@@ -89,7 +89,7 @@ void MainWindow::onNewOrderArrived()
 }
 */
 
-void MainWindow::onPageChanged(ElaNavigationType::NavigationNodeType nodeType, QString nodeKey)
+void MainWindow::onPageChanged(ElaNavigationType::NavigationNodeType /*nodeType*/, QString nodeKey)
 {
     qDebug() << "页面切换到:" << nodeKey;
 
