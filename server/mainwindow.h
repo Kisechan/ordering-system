@@ -22,6 +22,7 @@ public:
 private slots:
     //void onNewOrderArrived();// 新订单弹窗
     //void onNewCallArrived();// 新呼叫弹窗
+    void onPageChanged(ElaNavigationType::NavigationNodeType nodeType, QString nodeKey);
 
 private:
     void initWindow();
