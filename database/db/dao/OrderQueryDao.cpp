@@ -12,7 +12,12 @@ QJsonObject OrderQueryDao::getOrderHistoryByUser(int userId) const {
     if (!dbIsOpen(db_, &err)) return makeErr(500, err);
 
     QSqlQuery q(db_);
-    q.prepare("SELECT order_id, user_id, total_amount, create_time, comment FROM t_order WHERE user_id=? ORDER BY create_time DESC");
+    q.prepare(R"(
+        SELECT order_id, user_id, total_amount, create_time, comment
+        FROM t_order
+        WHERE user_id = ?
+        ORDER BY create_time DESC
+    )");
     q.addBindValue(userId);
 
     if (!q.exec()) return makeErr(500, sqlErr(q));
@@ -28,14 +33,13 @@ QJsonObject OrderQueryDao::getOrderHistoryByUser(int userId) const {
         o.insert("comment", q.value("comment").toString());
 
         QSqlQuery qDish(db_);
-        qDish.prepare(
-            "SELECT d.dish_id, d.name, d.price, COUNT(*) AS cnt "
-            "FROM t_order_dish od "
-            "JOIN t_dish d ON od.dish_id=d.dish_id "
-            "WHERE od.order_id=? "
-            "GROUP BY d.dish_id, d.name, d.price "
-            "ORDER BY d.dish_id ASC"
-        );
+        qDish.prepare(R"(
+            SELECT d.dish_id, d.name, d.price, d.category, d.description, d.url, od.count, od.rating
+            FROM t_order_dish od
+            JOIN t_dish d ON od.dish_id = d.dish_id
+            WHERE od.order_id = ?
+            ORDER BY d.dish_id ASC
+        )");
         qDish.addBindValue(orderId);
         if (!qDish.exec()) return makeErr(500, sqlErr(qDish));
 
@@ -45,15 +49,29 @@ QJsonObject OrderQueryDao::getOrderHistoryByUser(int userId) const {
             item.insert("dish_id", qDish.value("dish_id").toInt());
             item.insert("name", qDish.value("name").toString());
             item.insert("price", qDish.value("price").toDouble());
-            item.insert("count", qDish.value("cnt").toInt());
+            item.insert("category", qDish.value("category").toString());
+            item.insert("description", qDish.value("description").toString());
+            item.insert("url", qDish.value("url").toString());
+            item.insert("count", qDish.value("count").toInt());
+
+            // 用户评分可能为 NULL
+            QVariant ratingVar = qDish.value("rating");
+            if (ratingVar.isNull()) {
+                item.insert("rating", QJsonValue::Null);
+            } else {
+                item.insert("rating", ratingVar.toInt());
+            }
+
             dishes.append(item);
         }
+
         o.insert("dishes", dishes);
         orders.append(o);
     }
 
     return makeOk(orders);
 }
+
 
 QJsonObject OrderQueryDao::getAdminOrderBriefs() const {
     QString err;
