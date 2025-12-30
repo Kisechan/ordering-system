@@ -42,7 +42,9 @@ SOURCES += \
         ordercard.cpp \
         orderdetaildialog.cpp \
         orderinfo_page.cpp \
-        server.cpp
+        server.cpp \
+        servicerequest_page.cpp \
+        servicerequestcard.cpp
 
 HEADERS += \
         dishcard.h \
@@ -52,7 +54,9 @@ HEADERS += \
         ordercard.h \
         orderdetaildialog.h \
         orderinfo_page.h \
-        server.h
+        server.h \
+        servicerequest_page.h \
+        servicerequestcard.h
 
 FORMS += \
     mainwindow.ui

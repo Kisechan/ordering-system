@@ -8,8 +8,8 @@
 #include "ElaWindow.h"
 
 class OrderInfo_Page;
-//class CallService_Page;
 class DishManage_Page;
+class ServiceRequest_Page;
 
 class MainWindow : public ElaWindow
 {
@@ -31,8 +31,8 @@ private:
 
 private:
     OrderInfo_Page *order_info_page_{nullptr};
-    //CallService_Page *call_service_page_{nullptr};
     DishManage_Page *dish_manage_page_{nullptr};
+    ServiceRequest_Page *service_request_page_{nullptr};
 
     void closeEvent(QCloseEvent *event);
 };
