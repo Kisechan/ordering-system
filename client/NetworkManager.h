@@ -24,6 +24,12 @@ public:
     // 获取连接状态
     bool isConnected() const;
 
+    // 获取当前登录用户 ID
+    int getUserId() const { return m_userId; }
+
+    // 获取当前登录用户名
+    QString getUsername() const { return m_username; }
+
     // ========== 用户认证相关 ==========
     void login(const QString& username, const QString& password);
     void registerUser(const QString& username, const QString& password);
@@ -83,6 +89,10 @@ private:
 private:
     Client* m_client;
     QString m_lastRequestType;  // 记录最后一次请求的类型，用于匹配响应
+    
+    // 用户会话信息
+    int m_userId = -1;
+    QString m_username = "";
 };
 
 #endif // NETWORKMANAGER_H

@@ -9,6 +9,8 @@
 OrderCard::OrderCard(QWidget* parent)
     : QWidget(parent)
 {
+    QFont f;
+
     setObjectName("OrderCardRoot");
     setAttribute(Qt::WA_StyledBackground, true);
     setStyleSheet(
@@ -51,12 +53,18 @@ OrderCard::OrderCard(QWidget* parent)
 
     row3->addStretch(1);
 
-    m_commentBtn = new ElaPushButton(QStringLiteral("评论/修改"), this);
+    m_commentBtn = new ElaPushButton(QStringLiteral("评论"), this);
+    f = m_commentBtn->font();
+    f.setPixelSize(16);
+    m_commentBtn->setFont(f);
     m_commentBtn->setMinimumHeight(32);
     m_commentBtn->setStyleSheet("ElaPushButton { padding: 6px 14px; }");
     row3->addWidget(m_commentBtn);
 
     m_rateBtn = new ElaPushButton(QStringLiteral("评分"), this);
+    f = m_rateBtn->font();
+    f.setPixelSize(16);
+    m_rateBtn->setFont(f);
     m_rateBtn->setMinimumHeight(32);
     m_rateBtn->setStyleSheet("ElaPushButton { padding: 6px 14px; }");
     row3->addWidget(m_rateBtn);

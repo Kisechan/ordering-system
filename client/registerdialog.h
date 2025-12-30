@@ -7,6 +7,7 @@ class ElaLineEdit;
 class ElaPushButton;
 class ElaText;
 class ElaMessageBar;
+class NetworkManager;
 
 class RegisterDialog : public QDialog
 {
@@ -22,7 +23,7 @@ public:
     };
     Q_ENUM(RegisterResult)
 
-    explicit RegisterDialog(QWidget* parent = nullptr);
+    explicit RegisterDialog(NetworkManager* networkMgr, QWidget* parent = nullptr);
 
     QString username() const;
     QString password() const;
@@ -37,6 +38,10 @@ signals:
 private slots:
     void onRegisterClicked();
     void onBackClicked();
+    
+    // NetworkManager 响应槽
+    void onRegisterSuccess();
+    void onRegisterFailed(const QString& error);
 
 private:
     bool validateInputs(QString& err) const;
@@ -53,4 +58,6 @@ private:
     ElaPushButton* m_registerBtn= nullptr;
 
     QRegularExpression m_passRe; // ^[A-Za-z0-9]+$
+    
+    NetworkManager* m_networkMgr = nullptr;
 };

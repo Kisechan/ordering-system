@@ -1,17 +1,24 @@
 #include "clientmainwindow.h"
-
+#include <QToolButton>
+#include <QMenu>
+#include <QAction>
+#include <QStyle>
+#include <QTimer>
+#include <QLayout>
 #include <QPixmap>
 #include <QDebug>
+#include <QBoxLayout>
 #include "Def.h"
 #include "homepage.h"
 #include "cartpage.h"
-#include "OrderHistoryPage.h"
+#include "orderhistorypage.h"
 #include "placeholderpage.h"
 #include "ElaNavigationBar.h"
 #include "ElaInteractiveCard.h"
+#include "NetworkManager.h"
 
-ClientMainWindow::ClientMainWindow(QWidget* parent)
-    : ElaWindow(parent)
+ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, QWidget* parent)
+    : ElaWindow(parent), m_networkMgr(networkMgr)
 {
     QFont f = font();
     f.setPointSize(20);
@@ -26,7 +33,7 @@ ClientMainWindow::ClientMainWindow(QWidget* parent)
 
     // 头像信息卡
     setUserInfoCardVisible(true);
-    setUserInfoCardPixmap(QPixmap(QStringLiteral(":/include/Image/Moon.jpg"))); // 你换成自己的头像资源
+    setUserInfoCardPixmap(QPixmap(QStringLiteral(":/include/Image/Moon.jpg")));
     setUserInfoCardTitle(QStringLiteral("丰川祥子"));
     setUserInfoCardSubTitle(QStringLiteral("自助点餐系统"));
 
@@ -39,7 +46,7 @@ ClientMainWindow::ClientMainWindow(QWidget* parent)
 
     // 点餐页面：可滚动菜品展示
     m_cart = new CartManager(this);
-    m_home = new HomePage(this);
+    m_home = new HomePage(m_networkMgr, this);
     addPageNode(QStringLiteral("点餐"), m_home, ElaIconType::House);
 
     connect(m_home, &HomePage::addToCartRequested,
@@ -75,18 +82,6 @@ ClientMainWindow::ClientMainWindow(QWidget* parent)
             });
 
 
-    addPageNode(QStringLiteral("收货地址"),
-                new PlaceholderPage(QStringLiteral("收货地址（占位页）"), this),
-                ElaIconType::MapLocationDot);
-
-    addPageNode(QStringLiteral("订单记录"),
-                new PlaceholderPage(QStringLiteral("订单记录（占位页）"), this),
-                ElaIconType::Receipt);
-
-    addPageNode(QStringLiteral("消息"),
-                new PlaceholderPage(QStringLiteral("消息（占位页）"), this),
-                ElaIconType::Message);
-
     // 底部 Footer：账号管理
     QString accountKey;
     addFooterNode(QStringLiteral("账号管理"),
@@ -96,4 +91,26 @@ ClientMainWindow::ClientMainWindow(QWidget* parent)
                   ElaIconType::UserGear);
 
     moveToCenter();
+}
+
+void ClientMainWindow::contextMenuEvent(QContextMenuEvent* e)
+{
+    QMenu menu(this);
+    QAction* act = menu.addAction(QStringLiteral("刷新"));
+    QAction* picked = menu.exec(e->globalPos());
+    if (picked == act) hardRefresh();
+}
+
+void ClientMainWindow::hardRefresh()
+{
+    // 先创建并 show 新窗口，避免“最后一个窗口关闭 -> 程序退出”
+    auto* w = new ClientMainWindow(nullptr);
+    w->setAttribute(Qt::WA_DeleteOnClose);
+    w->show();
+
+    // 如果你想保留原窗口位置/大小，可以加：
+    w->setGeometry(this->geometry());
+
+    // 再关闭当前窗口
+    this->close(); // 如果你也希望自动释放：在构造里或这里给 this 设置 WA_DeleteOnClose
 }

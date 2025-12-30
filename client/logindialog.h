@@ -7,12 +7,13 @@ class ElaLineEdit;
 class ElaCheckBox;
 class ElaPushButton;
 class ElaText;
+class NetworkManager;
 
 class LoginDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit LoginDialog(QWidget* parent = nullptr);
+    explicit LoginDialog(NetworkManager* networkMgr, QWidget* parent = nullptr);
 
     QString username() const;
     QString password() const;
@@ -29,6 +30,12 @@ private slots:
     void onLoginClicked();
     void onCancelClicked();
     void onRegisterLinkActivated(const QString& link);
+    
+    // NetworkManager 响应槽
+    void onLoginSuccess();
+    void onLoginFailed(const QString& error);
+    void onRegisterSuccess();
+    void onRegisterFailed(const QString& error);
 
 private:
     void setErrorText(const QString& msg);
@@ -42,4 +49,6 @@ private:
     ElaPushButton* m_loginBtn   = nullptr;
     ElaPushButton* m_cancelBtn  = nullptr;
     ElaText*       m_errorText  = nullptr;
+    
+    NetworkManager* m_networkMgr = nullptr;
 };

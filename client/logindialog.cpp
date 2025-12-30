@@ -12,12 +12,11 @@
 #include "ElaPushButton.h"
 #include "ElaText.h"
 #include "ElaImageCard.h"
-
-// 需要你已把 RegisterDialog 加入工程
 #include "registerdialog.h"
+#include "NetworkManager.h"
 
-LoginDialog::LoginDialog(QWidget* parent)
-    : QDialog(parent)
+LoginDialog::LoginDialog(NetworkManager* networkMgr, QWidget* parent)
+    : QDialog(parent), m_networkMgr(networkMgr)
 {
     setWindowTitle(QStringLiteral("登录"));
     setModal(true);
@@ -170,6 +169,14 @@ LoginDialog::LoginDialog(QWidget* parent)
 
     connect(m_userEdit, &ElaLineEdit::returnPressed, this, &LoginDialog::onLoginClicked);
     connect(m_passEdit, &ElaLineEdit::returnPressed, this, &LoginDialog::onLoginClicked);
+    
+    // 连接 NetworkManager 信号
+    if (m_networkMgr) {
+        connect(m_networkMgr, &NetworkManager::loginSuccess, this, &LoginDialog::onLoginSuccess);
+        connect(m_networkMgr, &NetworkManager::loginFailed, this, &LoginDialog::onLoginFailed);
+        connect(m_networkMgr, &NetworkManager::registerSuccess, this, &LoginDialog::onRegisterSuccess);
+        connect(m_networkMgr, &NetworkManager::registerFailed, this, &LoginDialog::onRegisterFailed);
+    }
 
     m_userEdit->setFocus();
 }
@@ -201,6 +208,7 @@ void LoginDialog::setErrorText(const QString& msg)
 
 void LoginDialog::onLoginClicked()
 {
+    accept(); return;
     const QString u = username().trimmed();
     const QString p = password();
 
@@ -209,9 +217,38 @@ void LoginDialog::onLoginClicked()
 
     setErrorText(QString());
 
-    // 这里需要实现登录判定
-    // .......................................................................
-    accept(); // accpet() 函数表示成功
+    // 发起登录请求
+    if (m_networkMgr && m_networkMgr->isConnected()) {
+        m_loginBtn->setEnabled(false);
+        m_networkMgr->login(u, p);
+    } else {
+        setErrorText(QStringLiteral("未连接到服务器"));
+    }
+}
+
+void LoginDialog::onLoginSuccess()
+{
+    m_loginBtn->setEnabled(true);
+    setErrorText("");
+    // 登录成功，关闭对话框
+    accept();
+}
+
+void LoginDialog::onLoginFailed(const QString& error)
+{
+    m_loginBtn->setEnabled(true);
+    setErrorText(error);
+}
+
+void LoginDialog::onRegisterSuccess()
+{
+    // 注册成功后的处理在 RegisterDialog 的回调中
+}
+
+void LoginDialog::onRegisterFailed(const QString& error)
+{
+    // 注册失败后的处理在 RegisterDialog 的回调中
+    Q_UNUSED(error);
 }
 
 void LoginDialog::onCancelClicked()
@@ -221,20 +258,17 @@ void LoginDialog::onCancelClicked()
 
 void LoginDialog::onRegisterLinkActivated(const QString& /*link*/)
 {
-    RegisterDialog dlg(this);
+    RegisterDialog dlg(m_networkMgr, this);
 
-    // 示例：把 RegisterDialog 的注册请求接到你的后端/数据库逻辑
+    // 连接注册对话框的 registerSubmitted 信号
     connect(&dlg, &RegisterDialog::registerSubmitted, this,
-            [&dlg](const QString& u, const QString& p) {
-                // 例：用户名 admin 已存在
-                if (u == QStringLiteral("admin")) {
-                    dlg.applyRegisterResult(RegisterDialog::RegisterResult::UserAlreadyExists,
-                                            QStringLiteral("该账号已存在，请更换"));
-                    return;
+            [this, &dlg](const QString& u, const QString& p) {
+                if (m_networkMgr && m_networkMgr->isConnected()) {
+                    m_networkMgr->registerUser(u, p);
+                } else {
+                    dlg.applyRegisterResult(RegisterDialog::RegisterResult::UnknownError,
+                                          QStringLiteral("未连接到服务器"));
                 }
-                // 正常成功
-                dlg.applyRegisterResult(RegisterDialog::RegisterResult::Success,
-                                        QStringLiteral("注册成功，请返回登录"));
             });
 
     if (dlg.exec() == QDialog::Accepted) {
