@@ -11,6 +11,7 @@
 
 #include "orderinfo_page.h"
 #include "dishmanage_page.h"
+#include "ordercard.h"
 
 #include <QDebug>
 
@@ -19,6 +20,10 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     initWindow();
     initEdgeLayout();
+
+    // 监听页面切换事件，实现自动刷新
+    connect(this, &ElaWindow::navigationNodeClicked,
+            this, &MainWindow::onPageChanged);
 }
 
 MainWindow::~MainWindow()
@@ -84,6 +89,67 @@ void MainWindow::onNewOrderArrived()
 }
 */
 
+void MainWindow::onPageChanged(ElaNavigationType::NavigationNodeType nodeType, QString nodeKey)
+{
+    qDebug() << "页面切换到:" << nodeKey;
+
+    // 当切换到菜品管理页面时刷新数据
+    if (nodeKey == QStringLiteral("菜品管理") && dish_manage_page_) {
+
+        // TODO: 从数据库重新加载菜品列表
+        qDebug() << "刷新菜品管理页面数据";
+        // 示例：重新设置演示数据
+        /*
+        Dish d;
+        d.dish_id = 1;
+        d.name = QStringLiteral("宫保鸡丁");
+        d.price = 28.00;
+        d.category = QStringLiteral("川菜");
+        d.rating = 4.8;
+        d.url = QStringLiteral(":/Image/vvan.jpg");
+        d.description = QStringLiteral("经典川菜，微辣香脆");
+        dish_manage_page_->setDishList({d, d, d, d});
+        */
+    }
+
+    // 当切换到订单管理页面时刷新数据
+    if (nodeKey == QStringLiteral("订单管理") && order_info_page_) {
+
+        // TODO: 从数据库重新加载订单列表
+        qDebug() << "刷新订单管理页面数据";
+        // 示例：设置演示订单数据
+        /*
+        Order o;
+        o.order_id = 1001;
+        o.user_id = 2001;
+        o.total_amount = 88.00;
+        o.create_time = QDateTime::fromString("2025-12-30 10:45:30", "yyyy-MM-dd hh:mm:ss");
+        o.comment = QStringLiteral("少放辣椒，多加香菜");
+
+        // 添加订单中的菜品
+        OrderDish od1;
+        od1.dish.dish_id = 1;
+        od1.dish.name = QStringLiteral("宫保鸡丁");
+        od1.dish.price = 28.00;
+        od1.dish.url = QStringLiteral(":/Image/vvan.jpg");
+        od1.quantity = 2;
+        od1.customer_rating = 4.5;
+
+        OrderDish od2;
+        od2.dish.dish_id = 2;
+        od2.dish.name = QStringLiteral("鱼香肉丝");
+        od2.dish.price = 32.00;
+        od2.dish.url = QStringLiteral(":/Image/vvan.jpg");
+        od2.quantity = 1;
+        od2.customer_rating = 5.0;
+
+        o.dishes.append(od1);
+        o.dishes.append(od2);
+
+        order_info_page_->setOrderList({o, o, o});
+        */
+    }
+}
 
 void MainWindow::closeEvent(QCloseEvent *event) {
     Server* server = Server::getInstance();

@@ -151,7 +151,6 @@ void DishCard::refreshUI()
         m_price->setText(QStringLiteral("¥%1").arg(QString::number(m_dish.price, 'f', 2)));
     }
 
-    // 图片
     if (m_img) {
         QImage img;
         if (m_dish.url.startsWith(":/")) img = QImage(m_dish.url);

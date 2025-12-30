@@ -10,6 +10,7 @@
 
 #include "ElaLineEdit.h"
 #include "ElaText.h"
+#include "ElaPushButton.h"
 #include "ElaScrollArea.h"
 #include "ElaMessageBar.h"
 
@@ -25,12 +26,32 @@ DishManage_Page::DishManage_Page(QWidget* parent):
     mainLayout->setContentsMargins(20, 18, 20, 0);
     mainLayout->setSpacing(12);
 
-    // ===== 顶部搜索框（固定不滚动）=====
-    m_searchEdit = new ElaLineEdit(mainContainer);
+    // ===== 顶部操作栏（搜索框 + 增加按钮） =====
+    auto* topBar = new QWidget(mainContainer);
+    auto* topLayout = new QHBoxLayout(topBar);
+    topLayout->setContentsMargins(0, 0, 0, 0);
+    topLayout->setSpacing(10);
+
+    m_searchEdit = new ElaLineEdit(topBar);
     m_searchEdit->setPlaceholderText(QStringLiteral("搜索菜品名称 / 品类 / 描述"));
     m_searchEdit->setClearButtonEnabled(true);
     m_searchEdit->setMinimumHeight(40);
-    mainLayout->addWidget(m_searchEdit);
+    topLayout->addWidget(m_searchEdit, 1);
+
+    m_addBtn = new ElaPushButton(QStringLiteral("增加菜品"), topBar);
+    m_addBtn->setFixedSize(120, 40);
+    QFont btnFont = m_addBtn->font();
+    btnFont.setPixelSize(16);
+    m_addBtn->setFont(btnFont);
+    m_addBtn->setStyleSheet(
+        "ElaPushButton { "
+        "padding: 8px 16px; "
+        "background-color: #4CAF50;"
+        "}"
+    );
+    topLayout->addWidget(m_addBtn);
+
+    mainLayout->addWidget(topBar);
 
     // ===== 滚动内容区域（仅卡片列表滚动）=====
     auto* scrollContent = new QWidget(mainContainer);
@@ -67,6 +88,7 @@ DishManage_Page::DishManage_Page(QWidget* parent):
     connect(m_searchEdit, &ElaLineEdit::textChanged,this, &DishManage_Page::onSearchTextChanged);
     connect(m_searchDebounce, &QTimer::timeout,this, &DishManage_Page::applyFilterNow);
     connect(m_searchEdit, &ElaLineEdit::returnPressed,this, &DishManage_Page::onSearchReturnPressed);
+    connect(m_addBtn, &ElaPushButton::clicked, this, &DishManage_Page::onAddDish);
 
     // ===== 演示：先放 1 个宫保鸡丁卡片 =====
     Dish d;
@@ -84,7 +106,7 @@ DishManage_Page::DishManage_Page(QWidget* parent):
     d1.price = 88.00;
     d1.category = QStringLiteral("湘菜");
     d1.rating = 4.9;
-    d1.url = QStringLiteral(":/Image/vvan.jpg");
+    d1.url = QStringLiteral(":/include/Image/Moon.jpg");
     d1.description = QStringLiteral("good");
     // 真实情况每个dish不同
     setDishList({d,d1,d,d,d1,d,d,d,d1,d,d,d,d1,d});
@@ -99,7 +121,7 @@ void DishManage_Page::onSearchTextChanged(const QString& text)
 void DishManage_Page::setDishList(const QList<Dish>& dishes)
 {
     m_allDishes = dishes;
-    applyFilterNow();// add
+    applyFilterNow();
 }
 
 void DishManage_Page::onSearchReturnPressed()
@@ -250,4 +272,98 @@ void DishManage_Page::onDeleteDish(int dishId)
                               QStringLiteral("菜品已删除"),
                               2000, this);
     }
+}
+
+void DishManage_Page::onAddDish()
+{
+    // 创建新菜品对话框
+    auto* dialog = new DishEditDialog(this);
+    dialog->setWindowTitle(QStringLiteral("新增菜品"));
+
+    // 设置一个空的菜品（新增模式）
+    Dish newDish;
+    newDish.dish_id = 0;  // 0表示新增，数据库会自动生成ID
+    newDish.rating = 0.0; // 默认未评分
+    newDish.name = "";
+    newDish.price = 0.0;
+    newDish.category = "";
+    newDish.url = "";
+    newDish.description = "";
+
+    dialog->setDish(newDish);
+    dialog->setAddMode(true);  // 设置为新增模式
+
+    if (dialog->exec() == QDialog::Accepted) {
+        Dish dish = dialog->dish();
+
+        // ===== 字段验证 =====
+
+        // 验证必填字段
+        if (dish.name.trimmed().isEmpty()) {
+            ElaMessageBar::warning(ElaMessageBarType::BottomRight,
+                                  QStringLiteral("验证失败"),
+                                  QStringLiteral("菜品名称不能为空"),
+                                  2000, this);
+            dialog->deleteLater();
+            return;
+        }
+
+        if (dish.price <= 0) {
+            ElaMessageBar::warning(ElaMessageBarType::BottomRight,
+                                  QStringLiteral("验证失败"),
+                                  QStringLiteral("价格必须大于0"),
+                                  2000, this);
+            dialog->deleteLater();
+            return;
+        }
+
+        if (dish.category.trimmed().isEmpty()) {
+            ElaMessageBar::warning(ElaMessageBarType::BottomRight,
+                                  QStringLiteral("验证失败"),
+                                  QStringLiteral("品类不能为空"),
+                                  2000, this);
+            dialog->deleteLater();
+            return;
+        }
+
+        // 处理描述字段：如果为空则设置为空字符串（不是null）
+        if (dish.description.isNull()) {
+            dish.description = "";
+        }
+
+        // 处理图片URL：如果为空则使用默认图片
+        if (dish.url.trimmed().isEmpty()) {
+            dish.url = ":/Image/vvan.jpg";  // 默认图片路径
+        }
+
+        // 评分默认为0（未评分）
+        dish.rating = 0.0;
+
+        // 生成临时ID（实际应由数据库生成并返回）
+        // 这里使用当前列表最大ID+1作为临时ID
+        int maxId = 0;
+        for (const auto& d : m_allDishes) {
+            if (d.dish_id > maxId) {
+                maxId = d.dish_id;
+            }
+        }
+        dish.dish_id = maxId + 1;
+
+        // ===== 添加到本地列表 =====
+        m_allDishes.append(dish);
+
+        // ===== 发射信号通知外部添加到数据库 =====
+        emit dishAdded(dish);
+
+        // ===== 刷新显示 =====
+        applyFilterNow();
+
+        // ===== 显示成功提示 =====
+        ElaMessageBar::success(ElaMessageBarType::BottomRight,
+                              QStringLiteral("成功"),
+                              QStringLiteral("菜品添加成功"),
+                              2000, this);
+    }
+
+    dialog->deleteLater();
 }

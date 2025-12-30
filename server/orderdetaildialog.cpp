@@ -26,7 +26,7 @@ OrderDetailDialog::OrderDetailDialog(QWidget* parent)
     mainLayout->setContentsMargins(20, 20, 20, 20);
     mainLayout->setSpacing(15);
 
-    // 订单信息区域（卡片式设计）
+    // 订单信息区域
     auto* infoWidget = new QWidget(content);
     infoWidget->setObjectName("OrderInfoCard");
     infoWidget->setStyleSheet(
@@ -60,7 +60,7 @@ OrderDetailDialog::OrderDetailDialog(QWidget* parent)
     leftInfo->addWidget(m_timeLabel);
     leftInfo->addStretch();
 
-    // 右侧：备注和总金额
+    // 右侧：评价和总金额
     auto* rightInfo = new QVBoxLayout();
     rightInfo->setSpacing(10);
 
@@ -138,8 +138,22 @@ void OrderDetailDialog::setOrder(const Order& order)
         }
     }
     if (m_commentLabel) {
-        m_commentLabel->setText(QStringLiteral("备注：%1")
-                             .arg(m_order.comment.isEmpty() ? QStringLiteral("无") : m_order.comment));
+        QString fullComment = m_order.comment.isEmpty() ? QStringLiteral("无") : m_order.comment;
+        QString displayText;
+
+        // 设置字数限制，超过50个字符用省略号
+        const int maxLength = 50;
+
+        if (fullComment.length() > maxLength) {
+            displayText = QStringLiteral("评论：%1...").arg(fullComment.left(maxLength));
+            // 设置toolTip显示完整内容
+            m_commentLabel->setToolTip(QStringLiteral("评论：%1").arg(fullComment));
+        } else {
+            displayText = QStringLiteral("评论：%1").arg(fullComment);
+            m_commentLabel->setToolTip(""); // 清除tooltip
+        }
+
+        m_commentLabel->setText(displayText);
     }
     if (m_totalLabel) {
         m_totalLabel->setText(QStringLiteral("总金额：¥%1").arg(QString::number(m_order.total_amount, 'f', 2)));
@@ -172,7 +186,7 @@ void OrderDetailDialog::buildDishList()
         return;
     }
 
-    // 添加菜品卡片（仿照DishCard设计）
+    // 添加菜品卡片
     for (const auto& orderDish : m_order.dishes) {
         const Dish& dish = orderDish.dish;
         int quantity = orderDish.quantity;
