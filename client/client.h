@@ -44,6 +44,7 @@ private slots:
 
 private:
     QTcpSocket *socket;
+    QByteArray receiveBuffer;  // 接收缓冲区，用于处理不完整的JSON
 
     static Client* client;
 

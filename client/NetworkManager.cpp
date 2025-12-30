@@ -48,9 +48,11 @@ void NetworkManager::registerUser(const QString& username, const QString& passwo
 
 void NetworkManager::getDishList() {
     if (!isConnected()) {
+        qWarning() << "[NetworkManager] 未连接到服务器";
         emit dishListError("未连接到服务器");
         return;
     }
+    qDebug() << "[NetworkManager] 正在请求菜品列表...";
     m_lastRequestType = Protocol::DISH_LIST;
     QJsonObject request = Protocol::buildDishListRequest();
     m_client->sendJson(request);
@@ -72,13 +74,16 @@ void NetworkManager::submitOrder(const QJsonArray& dishes) {
 
 void NetworkManager::getOrderList() {
     if (!isConnected()) {
+        qWarning() << "[NetworkManager] 未连接到服务器";
         emit orderListError("未连接到服务器");
         return;
     }
     if (m_userId == -1) {
+        qWarning() << "[NetworkManager] 未登录，无法获取订单列表";
         emit orderListError("未登录，无法获取订单列表");
         return;
     }
+    qDebug() << "[NetworkManager] 正在请求订单列表... (userId=" << m_userId << ")";
     m_lastRequestType = Protocol::ORDER_LIST;
     QJsonObject request = Protocol::buildOrderListRequest();
     m_client->sendJson(request);
@@ -129,29 +134,57 @@ void NetworkManager::onJsonReceived(const QJsonObject& json) {
     // 解析响应
     ResponseParser::Response response = ResponseParser::parseResponse(json);
 
+    // 调试输出：打印完整的响应数据
+    qDebug() << "[NetworkManager] ========== 收到响应 ==========";
+    
+    // 从响应本身获取 type，而不是依赖 m_lastRequestType
+    QString responseType = json.value("type").toString();
+    qDebug() << "[NetworkManager] ResponseType (from JSON):" << responseType;
+    qDebug() << "[NetworkManager] m_lastRequestType (old):" << m_lastRequestType;
+    
+    qDebug() << "[NetworkManager] Response Code:" << response.code;
+    qDebug() << "[NetworkManager] Response Message:" << response.message;
+    qDebug() << "[NetworkManager] Response Valid:" << response.isValid;
+    
+    // 打印响应数据的键
+    if (!response.data.isEmpty()) {
+        qDebug() << "[NetworkManager] Response Data Keys:" << response.data.keys();
+        if (response.data.contains("array")) {
+            QJsonArray arr = response.data.value("array").toArray();
+            qDebug() << "[NetworkManager] Array Size:" << arr.size();
+        }
+    }
+    qDebug() << "[NetworkManager] ===========================";
+
     if (!response.isValid) {
         emit connectionError("服务器响应格式无效");
         return;
     }
 
-    // 根据最后的请求类型分发响应
-    if (m_lastRequestType == Protocol::LOGIN) {
+    // 优先使用响应中的 type，其次才用 m_lastRequestType
+    QString requestType = responseType.isEmpty() ? m_lastRequestType : responseType;
+    
+    // 根据请求类型分发响应
+    if (requestType == Protocol::LOGIN) {
         processLoginResponse(response);
-    } else if (m_lastRequestType == Protocol::REGISTER) {
+    } else if (requestType == Protocol::REGISTER) {
         processRegisterResponse(response);
-    } else if (m_lastRequestType == Protocol::DISH_LIST) {
+    } else if (requestType == Protocol::DISH_LIST) {
         processDishListResponse(response);
-    } else if (m_lastRequestType == Protocol::ORDER_SUBMIT) {
+    } else if (requestType == Protocol::ORDER_SUBMIT) {
         processOrderSubmitResponse(response);
-    } else if (m_lastRequestType == Protocol::ORDER_LIST) {
+    } else if (requestType == Protocol::ORDER_LIST) {
         processOrderListResponse(response);
-    } else if (m_lastRequestType == Protocol::ORDER_COMMENT) {
+    } else if (requestType == Protocol::ORDER_COMMENT) {
         processOrderCommentResponse(response);
-    } else if (m_lastRequestType == Protocol::CALL_WAITER) {
+    } else if (requestType == Protocol::CALL_WAITER) {
         processCallWaiterResponse(response);
     }
 
-    m_lastRequestType = "";
+    // 只在使用的是 responseType 时才清空 m_lastRequestType
+    if (!responseType.isEmpty()) {
+        m_lastRequestType = "";
+    }
 }
 
 void NetworkManager::onConnectionError(const QString& error) {
@@ -186,8 +219,10 @@ void NetworkManager::processDishListResponse(const ResponseParser::Response& res
         if (response.data.contains("array") && response.data.value("array").isArray()) {
             dishes = response.data.value("array").toArray();
         }
+        qDebug() << "[NetworkManager] 菜品列表接收成功，菜品数量:" << dishes.size();
         emit dishListReceived(dishes);
     } else {
+        qWarning() << "[NetworkManager] 菜品列表接收失败:" << response.message;
         emit dishListError(response.message);
     }
 }
@@ -206,8 +241,10 @@ void NetworkManager::processOrderListResponse(const ResponseParser::Response& re
         if (response.data.contains("array") && response.data.value("array").isArray()) {
             orders = response.data.value("array").toArray();
         }
+        qDebug() << "[NetworkManager] 订单列表接收成功，订单数量:" << orders.size();
         emit orderListReceived(orders);
     } else {
+        qWarning() << "[NetworkManager] 订单列表接收失败:" << response.message;
         emit orderListError(response.message);
     }
 }

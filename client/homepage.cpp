@@ -222,6 +222,8 @@ void HomePage::showErrorState(const QString& error)
 
 void HomePage::onDishListReceived(const QJsonArray& dishes)
 {
+    qDebug() << "[HomePage] 收到菜品列表，开始解析... 菜品数量:" << dishes.size();
+    
     // 解析 QJsonArray 构造 Dish 对象列表
     QList<Dish> dishList;
     
@@ -237,14 +239,17 @@ void HomePage::onDishListReceived(const QJsonArray& dishes)
         d.url = dishObj["url"].toString();
         d.description = dishObj["description"].toString();
         
+        qDebug() << "[HomePage]   菜品:" << d.name << ", ID:" << d.dish_id << ", 价格:" << d.price;
         dishList.append(d);
     }
     
+    qDebug() << "[HomePage] 菜品解析完成，总计" << dishList.size() << "个";
     // 更新 UI 显示所有菜品
     setDishList(dishList);
 }
 
 void HomePage::onDishListError(const QString& error)
 {
+    qWarning() << "[HomePage] 菜品列表获取失败:" << error;
     showErrorState(error);
 }
