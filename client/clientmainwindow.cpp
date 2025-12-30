@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QMenu>
 #include <QAction>
+#include <QRandomGenerator>
 #include <QStyle>
 #include <QTimer>
 #include <QLayout>
@@ -22,8 +23,8 @@
 #include "accountpage.h"
 #include "ElaMessageBar.h"
 
-ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, int tmpuserId, QString tmpusername, QWidget* parent)
-    : ElaWindow(parent), m_networkMgr(networkMgr), userId(tmpuserId), username(tmpusername)
+ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, int tmpuserId, QString tmpusername, int tmpTableNumber, QWidget* parent)
+    : ElaWindow(parent), m_networkMgr(networkMgr), userId(tmpuserId), username(tmpusername), tableNumber(tmpTableNumber)
 {
     QFont f = font();
     f.setPointSize(20);
@@ -31,6 +32,17 @@ ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, int tmpuserId, QS
 
     setWindowTitle(QStringLiteral("Online Shopping Mall(Client)"));
     resize(1050, 720);
+
+    // .....................................................................
+    // 这里需要实现桌号请求逻辑，构造该页面的时候，需要向服务器请求一个桌号，放进 tableNumber 成员变量中
+    // 但是因为刷新功能实现的底层逻辑是重新构造该页面，而刷新是不能重新请求桌号的，因此我们不得不用 if 区分是否需要获取桌号
+    // 具体来说，将 tableNumber 作为构造函数参数传入，
+    // 若 tableNumber == -1，则说明需要请求桌号；
+    // 若 tableNumber >= 0，则说明不需要请求桌号。
+
+    if (tableNumber == -1) {
+        // ........................................................................
+    }
 
     // 左侧导航栏（Ela 内置）
     setIsNavigationBarEnable(true);
@@ -150,7 +162,7 @@ ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, int tmpuserId, QS
                 LoginDialog login(m_networkMgr);
                 if (login.exec() == QDialog::Accepted) {
                     // 3) 登录成功：创建新主窗口
-                    auto* w = new ClientMainWindow(m_networkMgr, login.getUserId(), login.getUsername(), nullptr);
+                    auto* w = new ClientMainWindow(m_networkMgr, login.getUserId(), login.getUsername(), tableNumber, nullptr);
                     w->setAttribute(Qt::WA_DeleteOnClose);
                     w->setGeometry(this->geometry()); // 可选：继承原窗口位置/大小
                     w->show();
@@ -178,7 +190,7 @@ void ClientMainWindow::contextMenuEvent(QContextMenuEvent* e)
 void ClientMainWindow::hardRefresh()
 {
     // 1) 先创建并 show 新窗口（避免关闭最后一个窗口导致退出）
-    auto* w = new ClientMainWindow(m_networkMgr, userId, username, nullptr);
+    auto* w = new ClientMainWindow(m_networkMgr, userId, username, -1, nullptr);
     w->setAttribute(Qt::WA_DeleteOnClose);
     w->setGeometry(this->geometry());
     w->show();
