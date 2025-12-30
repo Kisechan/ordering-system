@@ -75,7 +75,6 @@ QJsonObject DishDao::insertDish(const QJsonObject& dish) const {
     q.addBindValue(dish.value("name").toString());
     q.addBindValue(dish.value("price").toDouble());
     q.addBindValue(dish.value("category").toString());
-    q.addBindValue(dish.value("rating").toDouble());
     q.addBindValue(dish.value("url").toString());
     q.addBindValue(dish.value("description").toString());
 
@@ -92,7 +91,6 @@ QJsonObject DishDao::updateDish(const QJsonObject& dish) const {
     q.addBindValue(dish.value("name").toString());
     q.addBindValue(dish.value("price").toDouble());
     q.addBindValue(dish.value("category").toString());
-    q.addBindValue(dish.value("rating").toDouble());
     q.addBindValue(dish.value("url").toString());
     q.addBindValue(dish.value("description").toString());
     q.addBindValue(dish.value("dish_id").toInt());
