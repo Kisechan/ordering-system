@@ -5,6 +5,7 @@
 #include "Def.h"
 #include "homepage.h"
 #include "cartpage.h"
+#include "OrderHistoryPage.h"
 #include "placeholderpage.h"
 #include "ElaNavigationBar.h"
 #include "ElaInteractiveCard.h"
@@ -56,6 +57,23 @@ ClientMainWindow::ClientMainWindow(QWidget* parent)
         // 选了哪些菜品，每个菜品选了几个放在数据结构 m_cart（类型是 CartManager）里面了
         // ............................................................
     });
+
+    // 历史订单页面：展示历史订单、评论、评分
+    auto* orders = new OrderHistoryPage(QStringLiteral("00000001"), this);
+    addPageNode(QStringLiteral("订单记录"), orders, ElaIconType::Receipt);
+
+    connect(orders, &OrderHistoryPage::ordersRequested, this,
+            [](const QString& userId){
+                // 请求订单逻辑，需要请求得到 userId 的订单信息
+                // ....................................................
+            });
+
+    connect(orders, &OrderHistoryPage::updateCommentRequested, this,
+            [](const QString& userId, int orderId, const QString& c){
+                // 更新评论逻辑，请求更新评论信息
+                // ..................................................
+            });
+
 
     addPageNode(QStringLiteral("收货地址"),
                 new PlaceholderPage(QStringLiteral("收货地址（占位页）"), this),
