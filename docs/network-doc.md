@@ -143,45 +143,6 @@ waiterCalled()
 waiterCallError(error)
 ```
 
-## 使用示例（Controller层）
-
-```cpp
-#include "NetworkManager.h"
-
-class LoginController : public QObject {
-    Q_OBJECT
-
-private:
-    NetworkManager* m_network;
-
-public slots:
-    void onLoginButtonClicked(const QString& username, const QString& password) {
-        // 确保连接到服务器
-        if (!m_network->isConnected()) {
-            m_network->connectToServer("127.0.0.1", 8080);
-        }
-
-        // 发起登录请求
-        m_network->login(username, password);
-    }
-
-private slots:
-    void onLoginSuccess() {
-        // 登录成功，切换界面
-        qDebug() << "登录成功";
-    }
-
-    void onLoginFailed(const QString& error) {
-        // 显示错误信息
-        qDebug() << "登录失败：" << error;
-    }
-
-    void onConnectionError(const QString& error) {
-        qDebug() << "连接错误：" << error;
-    }
-};
-```
-
 ## 功能说明
 
 当前网络模块实现了以下最小功能集合：

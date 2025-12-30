@@ -9,9 +9,10 @@
 #include "placeholderpage.h"
 #include "ElaNavigationBar.h"
 #include "ElaInteractiveCard.h"
+#include "NetworkManager.h"
 
-ClientMainWindow::ClientMainWindow(QWidget* parent)
-    : ElaWindow(parent)
+ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, QWidget* parent)
+    : ElaWindow(parent), m_networkMgr(networkMgr)
 {
     QFont f = font();
     f.setPointSize(20);
@@ -39,7 +40,7 @@ ClientMainWindow::ClientMainWindow(QWidget* parent)
 
     // 点餐页面：可滚动菜品展示
     m_cart = new CartManager(this);
-    m_home = new HomePage(this);
+    m_home = new HomePage(m_networkMgr, this);
     addPageNode(QStringLiteral("点餐"), m_home, ElaIconType::House);
 
     connect(m_home, &HomePage::addToCartRequested,
