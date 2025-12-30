@@ -71,7 +71,7 @@ ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, int tmpuserId, QS
     });
 
     // 历史订单页面：展示历史订单、评论、评分
-    auto* orders = new OrderHistoryPage(QStringLiteral("00000001"), this);
+    auto* orders = new OrderHistoryPage(m_networkMgr, this);
     addPageNode(QStringLiteral("订单记录"), orders, ElaIconType::Receipt);
 
     connect(orders, &OrderHistoryPage::ordersRequested, this,

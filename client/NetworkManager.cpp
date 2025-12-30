@@ -98,6 +98,23 @@ void NetworkManager::submitOrderComment(int orderId, const QString& comment) {
     m_client->sendJson(request);
 }
 
+void NetworkManager::submitOrderCommentWithRatings(int orderId, const QString& comment, const QJsonArray& dishes) {
+    if (!isConnected()) {
+        emit orderCommentFailed("未连接到服务器");
+        return;
+    }
+    if (m_userId == -1) {
+        emit orderCommentFailed("未登录，无法提交评价");
+        return;
+    }
+    qDebug() << "[NetworkManager] 提交订单评价 - orderId:" << orderId 
+             << ", comment:" << comment 
+             << ", dishes count:" << dishes.size();
+    m_lastRequestType = Protocol::ORDER_COMMENT;
+    QJsonObject request = Protocol::buildOrderCommentRequest(orderId, comment, dishes);
+    m_client->sendJson(request);
+}
+
 void NetworkManager::callWaiter() {
     if (!isConnected()) {
         emit waiterCallError("未连接到服务器");

@@ -5,16 +5,17 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
-#include <QMessageBox>
 #include <QDebug>
 #include "ElaScrollArea.h"
 #include "ElaText.h"
+#include "ElaMessageBar.h"
 
 #include "ordercard.h"
 #include "commentdialog.h"
+#include "NetworkManager.h"
 
-OrderHistoryPage::OrderHistoryPage(const QString& userId, QWidget* parent)
-    : ElaScrollPage(parent), m_userId(userId)
+OrderHistoryPage::OrderHistoryPage(NetworkManager* networkMgr, QWidget* parent)
+    : ElaScrollPage(parent), m_networkMgr(networkMgr)
 {
     setTitleVisible(false);
     setPageTitleSpacing(0);
@@ -39,81 +40,37 @@ OrderHistoryPage::OrderHistoryPage(const QString& userId, QWidget* parent)
         sa->setAlignment(Qt::AlignTop);
     }
 
-    // 构造即请求
-    emit ordersRequested(m_userId);
-
-    // ===== 先预置 2 个订单（调试用），确认 UI 没问题再接后端 =====
-    // ===== 没问题了就删掉别忘了 =======
+    // 初始化时清空数据
     m_orderIds.clear();
     m_totalAmounts.clear();
     m_times.clear();
     m_comments.clear();
     m_orderItems.clear();
 
-    // ---- 订单 10001 ----
-    {
-        QList<CartItem> items;
-
-        // 宫保鸡丁 x2
-        Dish d1;
-        d1.dish_id = 1;
-        d1.name = QStringLiteral("宫保鸡丁");
-        d1.price = 28.00;
-        CartItem it1;
-        it1.dish = d1;
-        it1.qty = 2;
-        items.push_back(it1);
-
-        // 鱼香肉丝 x1
-        Dish d2;
-        d2.dish_id = 3;
-        d2.name = QStringLiteral("鱼香肉丝");
-        d2.price = 32.00;
-        CartItem it2;
-        it2.dish = d2;
-        it2.qty = 1;
-        items.push_back(it2);
-
-        m_orderIds.push_back(10001);
-        m_totalAmounts.push_back(88.00); // 28*2 + 32*1
-        m_times.push_back(QStringLiteral("2025-01-03 12:45:30"));
-        m_comments.push_back(QStringLiteral("味道很好，下次还来"));
-        m_orderItems.push_back(items);
+    // 连接 NetworkManager 信号
+    if (m_networkMgr) {
+        connect(m_networkMgr, &NetworkManager::orderListReceived,
+                this, &OrderHistoryPage::onOrderListReceived);
+        connect(m_networkMgr, &NetworkManager::orderListError,
+                this, &OrderHistoryPage::onOrderListError);
+        connect(m_networkMgr, &NetworkManager::orderCommentSuccess,
+                this, &OrderHistoryPage::onOrderCommentSuccess);
+        connect(m_networkMgr, &NetworkManager::orderCommentFailed,
+                this, &OrderHistoryPage::onOrderCommentFailed);
+        
+        qDebug() << "[OrderHistoryPage] 请求订单列表...";
+        showEmpty(QStringLiteral("正在加载订单列表..."));
+        m_networkMgr->getOrderList();
+    } else {
+        qDebug() << "[OrderHistoryPage] 错误：NetworkManager 为空";
+        showEmpty(QStringLiteral("网络管理器未初始化"));
     }
-
-    // ---- 订单 10002 ----
-    {
-        QList<CartItem> items;
-
-        // 白切鸡 x1
-        Dish d;
-        d.dish_id = 2;
-        d.name = QStringLiteral("白切鸡");
-        d.price = 56.00;
-        CartItem it;
-        it.dish = d;
-        it.qty = 1;
-        items.push_back(it);
-
-        m_orderIds.push_back(10002);
-        m_totalAmounts.push_back(56.00);
-        m_times.push_back(QStringLiteral("2025-01-05 18:20:10"));
-        m_comments.push_back(QString()); // 没评论就不显示
-        m_orderItems.push_back(items);
-    }
-
-    rebuildList();
 }
 
-void OrderHistoryPage::setOrdersJson(const QByteArray& json)
+void OrderHistoryPage::onOrderListReceived(const QJsonArray& orders)
 {
-    QJsonParseError err{};
-    const QJsonDocument doc = QJsonDocument::fromJson(json, &err);
-    if (err.error != QJsonParseError::NoError || !doc.isArray()) {
-        showEmpty(QStringLiteral("订单数据解析失败"));
-        return;
-    }
-
+    qDebug() << "[OrderHistoryPage] 收到订单列表，数量:" << orders.size();
+    
     // 清空旧数据
     m_orderIds.clear();
     m_totalAmounts.clear();
@@ -121,8 +78,7 @@ void OrderHistoryPage::setOrdersJson(const QByteArray& json)
     m_comments.clear();
     m_orderItems.clear();
 
-    const QJsonArray arr = doc.array();
-    for (const auto& v : arr) {
+    for (const auto& v : orders) {
         if (!v.isObject()) continue;
         const QJsonObject o = v.toObject();
 
@@ -130,6 +86,11 @@ void OrderHistoryPage::setOrdersJson(const QByteArray& json)
         const double totalAmount = o.value("total_amount").toDouble();
         const QString time = o.value("create_time").toString();
         const QString comment = o.value("comment").toString();
+
+        qDebug() << "[OrderHistoryPage] 解析订单 -" 
+                 << "orderId:" << orderId
+                 << ", totalAmount:" << totalAmount
+                 << ", time:" << time;
 
         QList<CartItem> items;
         const QJsonArray dishes = o.value("dishes").toArray();
@@ -141,7 +102,10 @@ void OrderHistoryPage::setOrdersJson(const QByteArray& json)
             d.dish_id = di.value("dish_id").toInt();
             d.name    = di.value("name").toString();
             d.price   = di.value("price").toDouble();
-            // category/rating/url/description 后端若不给就留空（你不让新增结构，只能这样）
+            d.category = di.value("category").toString();
+            d.url     = di.value("url").toString();
+            d.description = di.value("description").toString();
+            
             CartItem it;
             it.dish = d;
             it.qty  = di.value("count").toInt(1);
@@ -156,6 +120,52 @@ void OrderHistoryPage::setOrdersJson(const QByteArray& json)
     }
 
     rebuildList();
+    
+    if (m_orderIds.isEmpty()) {
+        ElaMessageBar::information(ElaMessageBarType::BottomRight,
+                                  QStringLiteral("提示"),
+                                  QStringLiteral("暂无历史订单"),
+                                  2000, this);
+    } else {
+        ElaMessageBar::success(ElaMessageBarType::BottomRight,
+                              QStringLiteral("成功"),
+                              QStringLiteral("订单列表加载成功"),
+                              2000, this);
+    }
+}
+
+void OrderHistoryPage::onOrderListError(const QString& error)
+{
+    qDebug() << "[OrderHistoryPage] 获取订单列表失败:" << error;
+    showEmpty(QStringLiteral("获取订单列表失败: ") + error);
+    ElaMessageBar::error(ElaMessageBarType::BottomRight,
+                        QStringLiteral("错误"),
+                        QStringLiteral("获取订单列表失败: ") + error,
+                        3000, this);
+}
+
+void OrderHistoryPage::onOrderCommentSuccess()
+{
+    qDebug() << "[OrderHistoryPage] 评价提交成功";
+    ElaMessageBar::success(ElaMessageBarType::BottomRight,
+                          QStringLiteral("成功"),
+                          QStringLiteral("评价提交成功"),
+                          3000, this);
+    
+    // 重新加载订单列表以更新评论
+    if (m_networkMgr) {
+        qDebug() << "[OrderHistoryPage] 重新加载订单列表...";
+        m_networkMgr->getOrderList();
+    }
+}
+
+void OrderHistoryPage::onOrderCommentFailed(const QString& error)
+{
+    qDebug() << "[OrderHistoryPage] 评价提交失败:" << error;
+    ElaMessageBar::error(ElaMessageBarType::BottomRight,
+                        QStringLiteral("失败"),
+                        QStringLiteral("评价提交失败: ") + error,
+                        3000, this);
 }
 
 void OrderHistoryPage::rebuildList()
@@ -173,37 +183,59 @@ void OrderHistoryPage::rebuildList()
 
         connect(card, &OrderCard::editCommentRequested, this,
                 [this, i](int orderId, const QString& current) {
+                    qDebug() << "[OrderHistoryPage] 编辑订单评论 - orderId:" << orderId;
                     CommentDialog dlg(orderId, current, this);
                     if (dlg.exec() == QDialog::Accepted) {
                         const QString newC = dlg.comment();
+                        qDebug() << "[OrderHistoryPage] 提交评论:" << newC;
 
-                        // 先本地更新 UI（也可以等后端回调再改）
-                        m_comments[i] = newC;
-                        rebuildList();
-
-                        emit updateCommentRequested(m_userId, orderId, newC);
+                        if (m_networkMgr) {
+                            m_networkMgr->submitOrderComment(orderId, newC);
+                        } else {
+                            ElaMessageBar::error(ElaMessageBarType::BottomRight,
+                                               QStringLiteral("错误"),
+                                               QStringLiteral("网络管理器未初始化"),
+                                               2000, this);
+                        }
                     }
                 });
 
+        connect(card, &OrderCard::rateRequested, this,
+                [this, i](int orderId) {
+                    qDebug() << "[OrderHistoryPage] 评分订单 - orderId:" << orderId;
+                    RateDialog dlg(orderId,
+                                   m_totalAmounts[i],
+                                   m_times[i],
+                                   m_orderItems[i],
+                                   this);
 
-
-
-       connect(card, &OrderCard::rateRequested, this,
-            [this, i](int orderId) {
-
-            RateDialog dlg(orderId,
-                           m_totalAmounts[i],
-                           m_times[i],
-                           m_orderItems[i],
-                           this);
-
-            if (dlg.exec() == QDialog::Accepted) {
-                // 这里拿到 dish_id -> rating(1~5)
-                const QMap<int,int> r = dlg.ratings();
-                qDebug() << "假装评分";
-              //  emit updateRatingsRequested(m_userId, orderId, r);
-            }
-        });
+                    if (dlg.exec() == QDialog::Accepted) {
+                        // 获取 dish_id -> rating(1~5)
+                        const QMap<int,int> ratings = dlg.ratings();
+                        qDebug() << "[OrderHistoryPage] 获取评分数据，菜品数量:" << ratings.size();
+                        
+                        // 构造 dishes 数组
+                        QJsonArray dishArray;
+                        for (auto it = ratings.constBegin(); it != ratings.constEnd(); ++it) {
+                            QJsonObject dishObj;
+                            dishObj["dish_id"] = it.key();
+                            dishObj["rating"] = it.value();
+                            dishArray.append(dishObj);
+                            qDebug() << "[OrderHistoryPage] 菜品评分 - dish_id:" << it.key() << ", rating:" << it.value();
+                        }
+                        
+                        if (m_networkMgr) {
+                            // 使用当前评论（如果有）+ 菜品评分
+                            QString currentComment = m_comments[i];
+                            m_networkMgr->submitOrderCommentWithRatings(orderId, currentComment, dishArray);
+                        } else {
+                            ElaMessageBar::error(ElaMessageBarType::BottomRight,
+                                               QStringLiteral("错误"),
+                                               QStringLiteral("网络管理器未初始化"),
+                                               2000, this);
+                        }
+                    }
+                });
 
 
         m_listLayout->addWidget(card);
@@ -233,15 +265,4 @@ void OrderHistoryPage::showEmpty(const QString& text)
     m_listLayout->addWidget(t);
 }
 
-void OrderHistoryPage::applyCommentUpdateResult(int orderId, bool ok, const QString& message)
-{
-    // 这里只做提示（你后端可以返回 ok/err）
-    if (ok) {
-        if (!message.isEmpty()) {
-            QMessageBox::information(this, QStringLiteral("成功"), message);
-        }
-    } else {
-        QMessageBox::warning(this, QStringLiteral("失败"),
-                             message.isEmpty() ? QStringLiteral("评论更新失败") : message);
-    }
-}
+

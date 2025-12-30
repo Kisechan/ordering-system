@@ -66,13 +66,26 @@ namespace Protocol {
         return request;
     }
 
-    // 提交订单评价请求
+    // 提交订单评价请求（仅评论）
     QJsonObject buildOrderCommentRequest(int orderId, const QString& comment) {
         QJsonObject request;
         request["type"] = ORDER_COMMENT;
         QJsonObject data;
         data["order_id"] = orderId;
         data["comment"] = comment;
+        request["data"] = data;
+        request["timestamp"] = getCurrentTimestamp();
+        return request;
+    }
+
+    // 提交订单评价请求（评论 + 菜品评分）
+    QJsonObject buildOrderCommentRequest(int orderId, const QString& comment, const QJsonArray& dishes) {
+        QJsonObject request;
+        request["type"] = ORDER_COMMENT;
+        QJsonObject data;
+        data["order_id"] = orderId;
+        data["comment"] = comment;
+        data["dishes"] = dishes;  // 菜品评分数组 [{dish_id, rating}, ...]
         request["data"] = data;
         request["timestamp"] = getCurrentTimestamp();
         return request;

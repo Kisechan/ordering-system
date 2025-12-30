@@ -32,8 +32,10 @@ namespace Protocol {
     QJsonObject buildOrderSubmitRequest(const QJsonArray& dishes);
     // 获取订单历史
     QJsonObject buildOrderListRequest();
-    // 提交订单评价
+    // 提交订单评价（仅评论）
     QJsonObject buildOrderCommentRequest(int orderId, const QString& comment);
+    // 提交订单评价（评论 + 菜品评分）
+    QJsonObject buildOrderCommentRequest(int orderId, const QString& comment, const QJsonArray& dishes);
 
 } // namespace Protocol
 
