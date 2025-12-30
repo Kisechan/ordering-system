@@ -12,6 +12,8 @@
 #include "orderinfo_page.h"
 #include "dishmanage_page.h"
 #include "ordercard.h"
+#include "servicerequest_page.h"
+#include "servicerequestcard.h"
 
 #include <QDebug>
 
@@ -61,6 +63,8 @@ void MainWindow::initWindow() {
     dish_manage_page_=new DishManage_Page(this);
     addPageNode(QStringLiteral("菜品管理"),dish_manage_page_,ElaIconType::House);
 
+    service_request_page_ = new ServiceRequest_Page(this);
+    addPageNode(QStringLiteral("服务请求"), service_request_page_, ElaIconType::Bell);
 
 
 
@@ -148,6 +152,32 @@ void MainWindow::onPageChanged(ElaNavigationType::NavigationNodeType /*nodeType*
 
         order_info_page_->setOrderList({o, o, o});
         */
+    }
+
+    // 当切换到服务请求页面时刷新数据
+    if (nodeKey == QStringLiteral("服务请求") && service_request_page_) {
+        qDebug() << "刷新服务请求页面数据";
+        // TODO: 从数据库重新加载服务请求列表
+        // 示例：设置演示服务请求数据
+        ServiceRequest sr1;
+        sr1.request_id = 1;
+        sr1.customer_name = QStringLiteral("张三");
+        sr1.status = ServiceRequestStatus::Pending;
+        sr1.create_time = QStringLiteral("2025-12-30 10:15:00");
+
+        ServiceRequest sr2;
+        sr2.request_id = 2;
+        sr2.customer_name = QStringLiteral("李四");
+        sr2.status = ServiceRequestStatus::Processing;
+        sr2.create_time = QStringLiteral("2025-12-30 10:20:00");
+
+        ServiceRequest sr3;
+        sr3.request_id = 3;
+        sr3.customer_name = QStringLiteral("王五");
+        sr3.status = ServiceRequestStatus::Pending;
+        sr3.create_time = QStringLiteral("2025-12-30 10:25:00");
+
+        service_request_page_->setRequestList({sr1, sr2, sr3});
     }
 }
 
