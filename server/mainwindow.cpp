@@ -12,6 +12,9 @@
 #include "orderinfo_page.h"
 #include "dishmanage_page.h"
 #include "ordercard.h"
+#include "servicerequest_page.h"
+#include "servicerequestcard.h"
+#include "servicerequest.h"
 
 #include <QDebug>
 
@@ -61,6 +64,8 @@ void MainWindow::initWindow() {
     dish_manage_page_=new DishManage_Page(this);
     addPageNode(QStringLiteral("菜品管理"),dish_manage_page_,ElaIconType::House);
 
+    service_request_page_ = new ServiceRequest_Page(this);
+    addPageNode(QStringLiteral("服务请求"), service_request_page_, ElaIconType::Bell);
 
 
 
@@ -148,6 +153,16 @@ void MainWindow::onPageChanged(ElaNavigationType::NavigationNodeType /*nodeType*
 
         order_info_page_->setOrderList({o, o, o});
         */
+    }
+
+    // 当切换到服务请求页面时刷新数据
+    if (nodeKey == QStringLiteral("服务请求") && service_request_page_) {
+        qDebug() << "刷新服务请求页面数据";
+
+        /*
+        service_request_page_->onRefresh();
+        */
+
     }
 }
 
