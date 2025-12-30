@@ -27,42 +27,82 @@ bool NetworkManager::isConnected() const {
 }
 
 void NetworkManager::login(const QString& username, const QString& password) {
+    if (!isConnected()) {
+        emit loginFailed("未连接到服务器");
+        return;
+    }
     m_lastRequestType = Protocol::LOGIN;
     QJsonObject request = Protocol::buildLoginRequest(username, password);
     m_client->sendJson(request);
 }
 
 void NetworkManager::registerUser(const QString& username, const QString& password) {
+    if (!isConnected()) {
+        emit registerFailed("未连接到服务器");
+        return;
+    }
     m_lastRequestType = Protocol::REGISTER;
     QJsonObject request = Protocol::buildRegisterRequest(username, password);
     m_client->sendJson(request);
 }
 
 void NetworkManager::getDishList() {
+    if (!isConnected()) {
+        emit dishListError("未连接到服务器");
+        return;
+    }
     m_lastRequestType = Protocol::DISH_LIST;
     QJsonObject request = Protocol::buildDishListRequest();
     m_client->sendJson(request);
 }
 
 void NetworkManager::submitOrder(const QJsonArray& dishes) {
+    if (!isConnected()) {
+        emit orderSubmitFailed("未连接到服务器");
+        return;
+    }
+    if (m_userId == -1) {
+        emit orderSubmitFailed("未登录，无法提交订单");
+        return;
+    }
     m_lastRequestType = Protocol::ORDER_SUBMIT;
     QJsonObject request = Protocol::buildOrderSubmitRequest(dishes);
     m_client->sendJson(request);
 }
 
 void NetworkManager::getOrderList() {
+    if (!isConnected()) {
+        emit orderListError("未连接到服务器");
+        return;
+    }
+    if (m_userId == -1) {
+        emit orderListError("未登录，无法获取订单列表");
+        return;
+    }
     m_lastRequestType = Protocol::ORDER_LIST;
     QJsonObject request = Protocol::buildOrderListRequest();
     m_client->sendJson(request);
 }
 
 void NetworkManager::submitOrderComment(int orderId, const QString& comment) {
+    if (!isConnected()) {
+        emit orderCommentFailed("未连接到服务器");
+        return;
+    }
+    if (m_userId == -1) {
+        emit orderCommentFailed("未登录，无法提交评价");
+        return;
+    }
     m_lastRequestType = Protocol::ORDER_COMMENT;
     QJsonObject request = Protocol::buildOrderCommentRequest(orderId, comment);
     m_client->sendJson(request);
 }
 
 void NetworkManager::callWaiter() {
+    if (!isConnected()) {
+        emit waiterCallError("未连接到服务器");
+        return;
+    }
     m_lastRequestType = Protocol::CALL_WAITER;
     QJsonObject request = Protocol::buildCallWaiterRequest();
     m_client->sendJson(request);
@@ -102,6 +142,14 @@ void NetworkManager::onConnectionError(const QString& error) {
 }
 void NetworkManager::processLoginResponse(const ResponseParser::Response& response) {
     if (ResponseParser::isSuccess(response)) {
+        // 从响应中提取 user_id 并保存到会话
+        if (response.data.contains("user_id")) {
+            m_userId = response.data.value("user_id").toInt();
+        }
+        // 如果响应包含 username，也保存
+        if (response.data.contains("username")) {
+            m_username = response.data.value("username").toString();
+        }
         emit loginSuccess();
     } else {
         emit loginFailed(response.message);
@@ -115,7 +163,6 @@ void NetworkManager::processRegisterResponse(const ResponseParser::Response& res
         emit registerFailed(response.message);
     }
 }
-
 void NetworkManager::processDishListResponse(const ResponseParser::Response& response) {
     if (ResponseParser::isSuccess(response)) {
         QJsonArray dishes;

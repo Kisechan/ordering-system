@@ -10,10 +10,12 @@
 #include "ElaPushButton.h"
 #include "ElaText.h"
 #include "ElaContentDialog.h"
+#include "NetworkManager.h"
 
-RegisterDialog::RegisterDialog(QWidget* parent)
+RegisterDialog::RegisterDialog(NetworkManager* networkMgr, QWidget* parent)
     : QDialog(parent),
-      m_passRe(QRegularExpression(QStringLiteral("^[A-Za-z0-9]+$")))
+      m_passRe(QRegularExpression(QStringLiteral("^[A-Za-z0-9]+$"))),
+      m_networkMgr(networkMgr)
 {
     setWindowTitle(QStringLiteral("注册账号"));
     setModal(true);
@@ -98,6 +100,12 @@ RegisterDialog::RegisterDialog(QWidget* parent)
     connect(m_userEdit, &QLineEdit::returnPressed, this, &RegisterDialog::onRegisterClicked);
     connect(m_passEdit, &QLineEdit::returnPressed, this, &RegisterDialog::onRegisterClicked);
     connect(m_pass2Edit, &QLineEdit::returnPressed, this, &RegisterDialog::onRegisterClicked);
+    
+    // 连接 NetworkManager 信号
+    if (m_networkMgr) {
+        connect(m_networkMgr, &NetworkManager::registerSuccess, this, &RegisterDialog::onRegisterSuccess);
+        connect(m_networkMgr, &NetworkManager::registerFailed, this, &RegisterDialog::onRegisterFailed);
+    }
 
     m_userEdit->setFocus();
 }
@@ -135,7 +143,6 @@ void RegisterDialog::onRegisterClicked()
 {
     QString err;
     if (!validateInputs(err)) {
-        applyRegisterResult(RegisterResult::InvalidPasswordFormat, err);
         if (err == QStringLiteral("账号不能为空") || err == QStringLiteral("密码不能为空"))
             applyRegisterResult(RegisterResult::EmptyFields, err);
         else if (err == QStringLiteral("两次输入的密码不一致"))
@@ -145,14 +152,32 @@ void RegisterDialog::onRegisterClicked()
         return;
     }
 
-    // UI 层：发起注册请求（外部去真正写入数据库/发 HTTP 等）
+    // 发起注册请求
     m_errorText->setStyleSheet("color:#888888;");
     m_errorText->setText(QStringLiteral("正在注册..."));
+    m_registerBtn->setEnabled(false);
+    
+    emit registerSubmitted(username(), password());
+}
 
-    // 这里需要补充注册逻辑，根据结果执行对应的 applyRegisterResult
-    // ...........................................................
+void RegisterDialog::onRegisterSuccess()
+{
+    m_registerBtn->setEnabled(true);
+    applyRegisterResult(RegisterResult::Success, QStringLiteral("注册成功，请返回登录"));
+}
 
-    applyRegisterResult(RegisterResult::Success, "注册成功");
+void RegisterDialog::onRegisterFailed(const QString& error)
+{
+    m_registerBtn->setEnabled(true);
+    
+    // 根据错误消息判断失败类型
+    if (error.contains(QStringLiteral("已存在"))) {
+        applyRegisterResult(RegisterResult::UserAlreadyExists, error);
+    } else if (error.contains(QStringLiteral("密码格式")) || error.contains(QStringLiteral("数字"))) {
+        applyRegisterResult(RegisterResult::InvalidPasswordFormat, error);
+    } else {
+        applyRegisterResult(RegisterResult::UnknownError, error);
+    }
 }
 
 void RegisterDialog::applyRegisterResult(RegisterResult r, const QString& message)

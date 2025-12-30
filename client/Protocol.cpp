@@ -14,10 +14,8 @@ namespace Protocol {
     QJsonObject buildLoginRequest(const QString& username, const QString& password) {
         QJsonObject request;
         request["type"] = LOGIN;
-        QJsonObject data;
-        data["username"] = username;
-        data["password"] = password;
-        request["data"] = data;
+        request["username"] = username;
+        request["password"] = password;
         request["timestamp"] = getCurrentTimestamp();
         return request;
     }
@@ -26,10 +24,8 @@ namespace Protocol {
     QJsonObject buildRegisterRequest(const QString& username, const QString& password) {
         QJsonObject request;
         request["type"] = REGISTER;
-        QJsonObject data;
-        data["username"] = username;
-        data["password"] = password;
-        request["data"] = data;
+        request["username"] = username;
+        request["password"] = password;
         request["timestamp"] = getCurrentTimestamp();
         return request;
     }
@@ -52,13 +48,11 @@ namespace Protocol {
         return request;
     }
 
-    // 提交订单请求
+    // 提交订单请求 - 直接发送 dishes 数组，不包装在对象中
     QJsonObject buildOrderSubmitRequest(const QJsonArray& dishes) {
         QJsonObject request;
         request["type"] = ORDER_SUBMIT;
-        QJsonObject data;
-        data["dishes"] = dishes;
-        request["data"] = data;
+        request["data"] = dishes;  // 直接传递 dishes 数组
         request["timestamp"] = getCurrentTimestamp();
         return request;
     }

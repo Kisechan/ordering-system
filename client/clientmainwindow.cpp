@@ -9,9 +9,10 @@
 #include "placeholderpage.h"
 #include "ElaNavigationBar.h"
 #include "ElaInteractiveCard.h"
+#include "NetworkManager.h"
 
-ClientMainWindow::ClientMainWindow(QWidget* parent)
-    : ElaWindow(parent)
+ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, QWidget* parent)
+    : ElaWindow(parent), m_networkMgr(networkMgr)
 {
     QFont f = font();
     f.setPointSize(20);
