@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QFormLayout>
 #include <QWidget>
+#include <QDebug>
 
 #include "ElaLineEdit.h"
 #include "ElaText.h"
@@ -22,9 +23,9 @@ DishEditDialog::DishEditDialog(QWidget* parent)
     mainLayout->setSpacing(15);
 
     // 标题
-    auto* titleLabel = new ElaText(QStringLiteral("菜品信息编辑"), 20, content);
-    titleLabel->setStyleSheet("font-weight: bold;");
-    mainLayout->addWidget(titleLabel);
+    m_titleLabel = new ElaText(QStringLiteral("菜品信息编辑"), 20, content);
+    m_titleLabel->setStyleSheet("font-weight: bold;");
+    mainLayout->addWidget(m_titleLabel);
 
     // 表单区域
     auto* formLayout = new QFormLayout();
@@ -104,20 +105,42 @@ void DishEditDialog::setDish(const Dish& dish)
         m_nameEdit->setText(m_dish.name);
     }
     if (m_priceEdit) {
-        m_priceEdit->setText(QString::number(m_dish.price, 'f', 2));
+        if (m_dish.price > 0) {
+            m_priceEdit->setText(QString::number(m_dish.price, 'f', 2));
+        } else {
+            m_priceEdit->clear();
+        }
     }
     if (m_categoryEdit) {
         m_categoryEdit->setText(m_dish.category);
     }
     if (m_ratingLabel) {
-        m_ratingLabel->setText(QStringLiteral("⭐ %1 ")
-                              .arg(QString::number(m_dish.rating, 'f', 1)));
+        if (m_isAddMode) {
+            // 新增模式：显示默认未评分
+            m_ratingLabel->setText(QStringLiteral("⭐ 未评分"));
+        } else {
+            // 编辑模式：显示当前评分且不可修改
+            m_ratingLabel->setText(QStringLiteral("⭐ %1 ")
+                                  .arg(QString::number(m_dish.rating, 'f', 1)));
+        }
     }
     if (m_urlEdit) {
         m_urlEdit->setText(m_dish.url);
     }
     if (m_descEdit) {
         m_descEdit->setText(m_dish.description);
+    }
+}
+
+void DishEditDialog::setAddMode(bool isAdd)
+{
+    m_isAddMode = isAdd;
+
+    // 更新标题
+    if (isAdd) {
+        setWindowTitle(QStringLiteral("新增菜品"));
+    } else {
+        setWindowTitle(QStringLiteral("编辑菜品"));
     }
 }
 
