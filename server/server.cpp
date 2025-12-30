@@ -162,6 +162,7 @@ void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
         // 获取订单提交结果
         db::OrderService orderService(conn);
         response = orderService.submitOrder(userId, dishCountList);
+        response["type"] = type;  // 回复相同的 type
     } else if (type == "order_list") {
         qDebug() << "[Server] ========== 处理订单列表请求开始 ==========";
         int userId = userMap[socket].userId;
@@ -186,21 +187,52 @@ void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
         qDebug() << "[Server] ========== 处理订单列表请求结束 ==========";
         response["type"] = type;  // 回复相同的 type
     } else if (type == "order_comment") {
+        qDebug() << "[Server] ========== 处理订单评价请求开始 ==========";
         QJsonObject data = request["data"].toObject();
-        int orderId = data["orderId"].toInt();
+        int orderId = data["order_id"].toInt();  // 修改：orderId -> order_id
         QString comment = data["comment"].toString();
-        QJsonArray dishList = data["data"].toArray();
+        QJsonArray dishList = data["dishes"].toArray();  // 修改：data["data"] -> data["dishes"]
+        
+        qDebug() << "[Server] 客户端提交订单评价 (orderId=" << orderId << ")";
+        qDebug() << "[Server] 评论内容:" << comment;
+        qDebug() << "[Server] 评分菜品数量:" << dishList.size();
+        
         QVector<int> dishIdList;
         QVector<int> dishRatingList;
 
         for (QJsonValue v : dishList) {
             QJsonObject object = v.toObject();
-            dishIdList.append(object["dish_id"].toInt());
-            dishRatingList.append(object["rating"].toInt());
+            int dishId = object["dish_id"].toInt();
+            int rating = object["rating"].toInt();
+            dishIdList.append(dishId);
+            dishRatingList.append(rating);
+            qDebug() << "[Server]   菜品 ID:" << dishId << ", 评分:" << rating;
         }
 
+        qDebug() << "[Server] 创建 OrderService...";
+        db::OrderService orderService(conn);
+        
+        qDebug() << "[Server] 调用 orderService.submitComment()...";
+        response = orderService.submitComment(orderId, comment, dishIdList, dishRatingList);
+        
+        qDebug() << "[Server] 响应码:" << response["code"].toInt();
+        qDebug() << "[Server] 响应消息:" << response["msg"].toString();
+        
+        if (response["code"].toInt() == 200) {
+            qDebug() << "[Server] 订单评价提交成功";
+        } else {
+            qWarning() << "[Server] 订单评价提交失败:" << response["msg"].toString();
+        }
+        qDebug() << "[Server] ========== 处理订单评价请求结束 ==========";
+        response["type"] = type;  // 回复相同的 type
+    } else {
+        response["code"] = 401;
+        response["msg"] = "未知的请求!";
+        response["type"] = type;  // 回复相同的 type
+    }
+
     qDebug() << "[Server] ========== 准备发送响应 ==========";
-    qDebug() << "[Server] 响应类型: 回应 processRequest 中的请求";
+    qDebug() << "[Server] 响应类型:" << type;
     qDebug() << "[Server] Socket 指针:" << socket;
     qDebug() << "[Server] 响应码:" << response["code"].toInt();
     qDebug() << "[Server] 响应消息:" << response["msg"].toString();
@@ -208,14 +240,6 @@ void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
     sendJson(socket, response);
     
     qDebug() << "[Server] ========== 响应已发送 ==========";
-        db::OrderService orderService(conn);
-        response = orderService.submitComment(orderId, comment, dishIdList, dishRatingList);
-    } else {
-        response["code"] = 401;
-        response["msg"] = "未知的请求!";
-    }
-
-    sendJson(socket, response);
 }
 
 // 发送 JSON 给客户端

@@ -191,6 +191,10 @@ void NetworkManager::onConnectionError(const QString& error) {
     emit connectionError(error);
 }
 void NetworkManager::processLoginResponse(const ResponseParser::Response& response) {
+    qDebug() << "[NetworkManager::processLoginResponse] ========== 处理登录响应 ==========";
+    qDebug() << "[NetworkManager::processLoginResponse] Response Code:" << response.code;
+    qDebug() << "[NetworkManager::processLoginResponse] Response Message:" << response.message;
+    
     if (ResponseParser::isSuccess(response)) {
         // 从响应中提取 user_id 并保存到会话
         if (response.data.contains("user_id")) {
@@ -200,67 +204,115 @@ void NetworkManager::processLoginResponse(const ResponseParser::Response& respon
         if (response.data.contains("username")) {
             m_username = response.data.value("username").toString();
         }
+        qDebug() << "[NetworkManager::processLoginResponse] 登录成功，userId:" << m_userId << ", username:" << m_username;
         emit loginSuccess();
     } else {
+        qWarning() << "[NetworkManager::processLoginResponse] 登录失败:" << response.message;
         emit loginFailed(response.message);
     }
+    
+    qDebug() << "[NetworkManager::processLoginResponse] ===========================";
 }
 
 void NetworkManager::processRegisterResponse(const ResponseParser::Response& response) {
+    qDebug() << "[NetworkManager::processRegisterResponse] ========== 处理注册响应 ==========";
+    qDebug() << "[NetworkManager::processRegisterResponse] Response Code:" << response.code;
+    qDebug() << "[NetworkManager::processRegisterResponse] Response Message:" << response.message;
+    
     if (ResponseParser::isSuccess(response)) {
+        qDebug() << "[NetworkManager::processRegisterResponse] 注册成功";
         emit registerSuccess();
     } else {
+        qWarning() << "[NetworkManager::processRegisterResponse] 注册失败:" << response.message;
         emit registerFailed(response.message);
     }
+    
+    qDebug() << "[NetworkManager::processRegisterResponse] ===========================";
 }
 void NetworkManager::processDishListResponse(const ResponseParser::Response& response) {
+    qDebug() << "[NetworkManager::processDishListResponse] ========== 处理菜品列表响应 ==========";
+    qDebug() << "[NetworkManager::processDishListResponse] Response Code:" << response.code;
+    qDebug() << "[NetworkManager::processDishListResponse] Response Message:" << response.message;
+    
     if (ResponseParser::isSuccess(response)) {
         QJsonArray dishes;
         if (response.data.contains("array") && response.data.value("array").isArray()) {
             dishes = response.data.value("array").toArray();
         }
-        qDebug() << "[NetworkManager] 菜品列表接收成功，菜品数量:" << dishes.size();
+        qDebug() << "[NetworkManager::processDishListResponse] 菜品列表接收成功，菜品数量:" << dishes.size();
         emit dishListReceived(dishes);
     } else {
-        qWarning() << "[NetworkManager] 菜品列表接收失败:" << response.message;
+        qWarning() << "[NetworkManager::processDishListResponse] 菜品列表接收失败:" << response.message;
         emit dishListError(response.message);
     }
+    
+    qDebug() << "[NetworkManager::processDishListResponse] ===========================";
 }
 
 void NetworkManager::processOrderSubmitResponse(const ResponseParser::Response& response) {
+    qDebug() << "[NetworkManager::processOrderSubmitResponse] ========== 处理订单提交响应 ==========";
+    qDebug() << "[NetworkManager::processOrderSubmitResponse] Response Code:" << response.code;
+    qDebug() << "[NetworkManager::processOrderSubmitResponse] Response Message:" << response.message;
+    
     if (ResponseParser::isSuccess(response)) {
+        qDebug() << "[NetworkManager::processOrderSubmitResponse] 订单提交成功";
         emit orderSubmitSuccess();
     } else {
+        qWarning() << "[NetworkManager::processOrderSubmitResponse] 订单提交失败:" << response.message;
         emit orderSubmitFailed(response.message);
     }
+    
+    qDebug() << "[NetworkManager::processOrderSubmitResponse] ===========================";
 }
 
 void NetworkManager::processOrderListResponse(const ResponseParser::Response& response) {
+    qDebug() << "[NetworkManager::processOrderListResponse] ========== 处理订单列表响应 ==========";
+    qDebug() << "[NetworkManager::processOrderListResponse] Response Code:" << response.code;
+    qDebug() << "[NetworkManager::processOrderListResponse] Response Message:" << response.message;
+    
     if (ResponseParser::isSuccess(response)) {
         QJsonArray orders;
         if (response.data.contains("array") && response.data.value("array").isArray()) {
             orders = response.data.value("array").toArray();
         }
-        qDebug() << "[NetworkManager] 订单列表接收成功，订单数量:" << orders.size();
+        qDebug() << "[NetworkManager::processOrderListResponse] 订单列表接收成功，订单数量:" << orders.size();
         emit orderListReceived(orders);
     } else {
-        qWarning() << "[NetworkManager] 订单列表接收失败:" << response.message;
+        qWarning() << "[NetworkManager::processOrderListResponse] 订单列表接收失败:" << response.message;
         emit orderListError(response.message);
     }
+    
+    qDebug() << "[NetworkManager::processOrderListResponse] ===========================";
 }
 
 void NetworkManager::processOrderCommentResponse(const ResponseParser::Response& response) {
+    qDebug() << "[NetworkManager::processOrderCommentResponse] ========== 处理订单评价响应 ==========";
+    qDebug() << "[NetworkManager::processOrderCommentResponse] Response Code:" << response.code;
+    qDebug() << "[NetworkManager::processOrderCommentResponse] Response Message:" << response.message;
+    
     if (ResponseParser::isSuccess(response)) {
+        qDebug() << "[NetworkManager::processOrderCommentResponse] 订单评价提交成功";
         emit orderCommentSuccess();
     } else {
+        qWarning() << "[NetworkManager::processOrderCommentResponse] 订单评价提交失败:" << response.message;
         emit orderCommentFailed(response.message);
     }
+    
+    qDebug() << "[NetworkManager::processOrderCommentResponse] ===========================";
 }
 
 void NetworkManager::processCallWaiterResponse(const ResponseParser::Response& response) {
+    qDebug() << "[NetworkManager::processCallWaiterResponse] ========== 处理呼叫服务员响应 ==========";
+    qDebug() << "[NetworkManager::processCallWaiterResponse] Response Code:" << response.code;
+    qDebug() << "[NetworkManager::processCallWaiterResponse] Response Message:" << response.message;
+    
     if (ResponseParser::isSuccess(response)) {
+        qDebug() << "[NetworkManager::processCallWaiterResponse] 呼叫服务员成功";
         emit waiterCalled();
     } else {
+        qWarning() << "[NetworkManager::processCallWaiterResponse] 呼叫服务员失败:" << response.message;
         emit waiterCallError(response.message);
     }
+    
+    qDebug() << "[NetworkManager::processCallWaiterResponse] ===========================";
 }

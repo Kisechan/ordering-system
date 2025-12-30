@@ -146,7 +146,7 @@ void OrderHistoryPage::onOrderListError(const QString& error)
 
 void OrderHistoryPage::onOrderCommentSuccess()
 {
-    qDebug() << "[OrderHistoryPage] 评价提交成功";
+    qDebug() << "[OrderHistoryPage] ========== 订单评价提交成功 ==========";
     ElaMessageBar::success(ElaMessageBarType::BottomRight,
                           QStringLiteral("成功"),
                           QStringLiteral("评价提交成功"),
@@ -157,15 +157,19 @@ void OrderHistoryPage::onOrderCommentSuccess()
         qDebug() << "[OrderHistoryPage] 重新加载订单列表...";
         m_networkMgr->getOrderList();
     }
+    
+    qDebug() << "[OrderHistoryPage] ===========================";
 }
 
 void OrderHistoryPage::onOrderCommentFailed(const QString& error)
 {
-    qDebug() << "[OrderHistoryPage] 评价提交失败:" << error;
+    qDebug() << "[OrderHistoryPage] ========== 订单评价提交失败 ==========";
+    qWarning() << "[OrderHistoryPage] 错误信息:" << error;
     ElaMessageBar::error(ElaMessageBarType::BottomRight,
                         QStringLiteral("失败"),
                         QStringLiteral("评价提交失败: ") + error,
                         3000, this);
+    qDebug() << "[OrderHistoryPage] ===========================";
 }
 
 void OrderHistoryPage::rebuildList()
@@ -181,15 +185,26 @@ void OrderHistoryPage::rebuildList()
         auto* card = new OrderCard(m_listContainer);
         card->setOrder(m_orderIds[i], m_totalAmounts[i], m_times[i], m_comments[i], m_orderItems[i]);
 
+        // 使用 orderId 而不是索引 i，避免 lambda 捕获的索引失效
+        int orderId = m_orderIds[i];
+        double totalAmount = m_totalAmounts[i];
+        QString time = m_times[i];
+        QString comment = m_comments[i];
+        QList<CartItem> orderItems = m_orderItems[i];
+
         connect(card, &OrderCard::editCommentRequested, this,
-                [this, i](int orderId, const QString& current) {
+                [this, orderId](int /*cardOrderId*/, const QString& current) {
+                    qDebug() << "[OrderHistoryPage] ========== 打开评论对话框 ==========";
                     qDebug() << "[OrderHistoryPage] 编辑订单评论 - orderId:" << orderId;
+                    qDebug() << "[OrderHistoryPage] 当前评论:" << current;
+                    
                     CommentDialog dlg(orderId, current, this);
                     if (dlg.exec() == QDialog::Accepted) {
                         const QString newC = dlg.comment();
-                        qDebug() << "[OrderHistoryPage] 提交评论:" << newC;
+                        qDebug() << "[OrderHistoryPage] 用户提交新评论:" << newC;
 
                         if (m_networkMgr) {
+                            qDebug() << "[OrderHistoryPage] 发送评论到服务器...";
                             m_networkMgr->submitOrderComment(orderId, newC);
                         } else {
                             ElaMessageBar::error(ElaMessageBarType::BottomRight,
@@ -201,17 +216,20 @@ void OrderHistoryPage::rebuildList()
                 });
 
         connect(card, &OrderCard::rateRequested, this,
-                [this, i](int orderId) {
+                [this, orderId, totalAmount, time, orderItems](int /*cardOrderId*/) {
+                    qDebug() << "[OrderHistoryPage] ========== 打开评分对话框 ==========";
                     qDebug() << "[OrderHistoryPage] 评分订单 - orderId:" << orderId;
+                    
                     RateDialog dlg(orderId,
-                                   m_totalAmounts[i],
-                                   m_times[i],
-                                   m_orderItems[i],
+                                   totalAmount,
+                                   time,
+                                   orderItems,
                                    this);
 
                     if (dlg.exec() == QDialog::Accepted) {
                         // 获取 dish_id -> rating(1~5)
                         const QMap<int,int> ratings = dlg.ratings();
+                        qDebug() << "[OrderHistoryPage] ========== 用户提交评分 ==========";
                         qDebug() << "[OrderHistoryPage] 获取评分数据，菜品数量:" << ratings.size();
                         
                         // 构造 dishes 数组
@@ -221,13 +239,12 @@ void OrderHistoryPage::rebuildList()
                             dishObj["dish_id"] = it.key();
                             dishObj["rating"] = it.value();
                             dishArray.append(dishObj);
-                            qDebug() << "[OrderHistoryPage] 菜品评分 - dish_id:" << it.key() << ", rating:" << it.value();
+                            qDebug() << "[OrderHistoryPage]   菜品评分 - dish_id:" << it.key() << ", rating:" << it.value();
                         }
                         
                         if (m_networkMgr) {
-                            // 使用当前评论（如果有）+ 菜品评分
-                            QString currentComment = m_comments[i];
-                            m_networkMgr->submitOrderCommentWithRatings(orderId, currentComment, dishArray);
+                            qDebug() << "[OrderHistoryPage] 发送评分和评论到服务器...";
+                            m_networkMgr->submitOrderCommentWithRatings(orderId, "", dishArray);
                         } else {
                             ElaMessageBar::error(ElaMessageBarType::BottomRight,
                                                QStringLiteral("错误"),
