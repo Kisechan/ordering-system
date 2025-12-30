@@ -64,27 +64,15 @@ ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, int tmpuserId, QS
     auto* cartPage = new CartPage(m_cart, m_networkMgr, this);
     addPageNode(QStringLiteral("购物车"), cartPage, ElaIconType::CartShopping);
 
-    connect(cartPage, &CartPage::orderRequested, this, [this](const OrderDraft& draft){
-        // 点单逻辑，需要实现
+    connect(cartPage, &CartPage::orderRequested, this, [this](const OrderDraft& /*draft*/){
+        // 点单逻辑已在 CartPage 中通过 NetworkManager 实现
         // 选了哪些菜品，每个菜品选了几个放在数据结构 m_cart（类型是 CartManager）里面了
-        // ............................................................
     });
 
     // 历史订单页面：展示历史订单、评论、评分
     auto* orders = new OrderHistoryPage(m_networkMgr, this);
     addPageNode(QStringLiteral("订单记录"), orders, ElaIconType::Receipt);
-
-    connect(orders, &OrderHistoryPage::ordersRequested, this,
-            [](const QString& userId){
-                // 请求订单逻辑，需要请求得到 userId 的订单信息
-                // ....................................................
-            });
-
-    connect(orders, &OrderHistoryPage::updateCommentRequested, this,
-            [](const QString& userId, int orderId, const QString& c){
-                // 更新评论逻辑，请求更新评论信息
-                // ..................................................
-            });
+    // OrderHistoryPage 现在直接集成 NetworkManager，内部处理所有逻辑
 
     // 刷新和
     QString callWaiterKey;
