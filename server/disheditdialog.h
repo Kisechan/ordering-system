@@ -17,10 +17,13 @@ public:
 
     void setDish(const Dish& dish);
     Dish dish() const;
+    void setAddMode(bool isAdd);  // 设置为新增模式
 
 private:
     Dish m_dish;
+    bool m_isAddMode = false;  // 是否为新增模式
 
+    ElaText*     m_titleLabel = nullptr;   // 对话框标题
     ElaLineEdit* m_nameEdit = nullptr;
     ElaLineEdit* m_priceEdit = nullptr;
     ElaLineEdit* m_categoryEdit = nullptr;
