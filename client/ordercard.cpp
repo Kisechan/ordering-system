@@ -53,7 +53,7 @@ OrderCard::OrderCard(QWidget* parent)
 
     row3->addStretch(1);
 
-    m_rateBtn = new ElaPushButton(QStringLiteral("评分"), this);
+    m_rateBtn = new ElaPushButton(QStringLiteral("评价"), this);
     f = m_rateBtn->font();
     f.setPixelSize(16);
     m_rateBtn->setFont(f);
@@ -63,8 +63,7 @@ OrderCard::OrderCard(QWidget* parent)
 
     root->addLayout(row3);
 
-    connect(m_commentBtn, &ElaPushButton::clicked, this, &OrderCard::onEditComment);
-    connect(m_rateBtn,    &ElaPushButton::clicked, this, &OrderCard::onRate);
+    connect(m_rateBtn, &ElaPushButton::clicked, this, &OrderCard::onRate);
 }
 
 void OrderCard::setOrder(int orderId,
@@ -94,17 +93,12 @@ void OrderCard::refreshUI()
             m_commentText->setVisible(false); // 没评论就不显示
         } else {
             m_commentText->setVisible(true);
-            m_commentText->setText(QStringLiteral("评论：%1").arg(c));
+            m_commentText->setText(QStringLiteral("评语：%1").arg(c));
         }
     }
 }
 
-void OrderCard::onEditComment()
-{
-    emit editCommentRequested(m_orderId, m_comment);
-}
-
 void OrderCard::onRate()
 {
-    emit rateRequested(m_orderId); // 先留给你后面做评分
+    emit rateRequested(m_orderId);
 }

@@ -7,6 +7,7 @@
 class QWidget;
 class QVBoxLayout;
 class ElaScrollArea;
+class ElaPlainTextEdit;
 
 class RateDishCard;
 
@@ -18,7 +19,12 @@ public:
                         double totalAmount,
                         const QString& time,
                         const QList<CartItem>& items,
+                        const QString& presetComment = QString(),
+                        const QMap<int, int>& presetRatings = QMap<int, int>(),
                         QWidget* parent = nullptr);
+
+    // 获取订单评语
+    QString comment() const;
 
     // dish_id -> rating(1~5)
     QMap<int, int> ratings() const { return m_ratings; }
@@ -31,6 +37,8 @@ private:
     double m_totalAmount = 0.0;
     QString m_time;
     QList<CartItem> m_items;
+    QString m_presetComment;
+    QMap<int, int> m_presetRatings;  // 预设评分
 
     QMap<int, int> m_ratings;
 
@@ -38,4 +46,5 @@ private:
     QWidget* m_listContainer = nullptr;
     QVBoxLayout* m_listLayout = nullptr;
     ElaScrollArea* m_scroll = nullptr;
+    ElaPlainTextEdit* m_edit = nullptr;  // 评论输入框
 };

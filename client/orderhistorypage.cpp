@@ -9,9 +9,8 @@
 #include "ElaScrollArea.h"
 #include "ElaText.h"
 #include "ElaMessageBar.h"
-#include "reviewdialog.h"
+#include "ratedialog.h"
 #include "ordercard.h"
-#include "commentdialog.h"
 #include "NetworkManager.h"
 
 OrderHistoryPage::OrderHistoryPage(NetworkManager* networkMgr, QWidget* parent)
@@ -77,6 +76,7 @@ void OrderHistoryPage::onOrderListReceived(const QJsonArray& orders)
     m_times.clear();
     m_comments.clear();
     m_orderItems.clear();
+    m_dishRatings.clear();
 
     for (const auto& v : orders) {
         if (!v.isObject()) continue;
@@ -93,6 +93,7 @@ void OrderHistoryPage::onOrderListReceived(const QJsonArray& orders)
                  << ", time:" << time;
 
         QList<CartItem> items;
+        QMap<int, int> dishRatings;  // 该订单的菜品评分
         const QJsonArray dishes = o.value("dishes").toArray();
         for (const auto& dv : dishes) {
             if (!dv.isObject()) continue;
@@ -106,6 +107,12 @@ void OrderHistoryPage::onOrderListReceived(const QJsonArray& orders)
             d.url     = di.value("url").toString();
             d.description = di.value("description").toString();
             
+            // 读取菜品评分（如果有）
+            int rating = di.value("rating").toInt(0);  // 0 表示未评分
+            if (rating > 0) {
+                dishRatings[d.dish_id] = rating;
+            }
+            
             CartItem it;
             it.dish = d;
             it.qty  = di.value("count").toInt(1);
@@ -117,6 +124,7 @@ void OrderHistoryPage::onOrderListReceived(const QJsonArray& orders)
         m_times.push_back(time);
         m_comments.push_back(comment);
         m_orderItems.push_back(items);
+        m_dishRatings.push_back(dishRatings);
     }
 
     rebuildList();
@@ -191,28 +199,57 @@ void OrderHistoryPage::rebuildList()
         QString time = m_times[i];
         QString comment = m_comments[i];
         QList<CartItem> orderItems = m_orderItems[i];
+        QMap<int, int> dishRatings = m_dishRatings[i];  // 预设评分
 
+        // 评价按钮：打开评价对话框，同时提交评语和菜品评分
         connect(card, &OrderCard::rateRequested, this,
-                [this, i](int orderId) {
-                    ReviewDialog dlg(orderId,
-                                     m_totalAmounts[i],
-                                     m_times[i],
-                                     m_orderItems[i],
-                                     m_comments[i],   // 预置评论：有就带进去，没有就是空
-                                     this);
+                [this, orderId, totalAmount, time, comment, orderItems, dishRatings](int /*cardOrderId*/) {
+                    qDebug() << "[OrderHistoryPage] ========== 打开评价对话框 ==========";
+                    qDebug() << "[OrderHistoryPage] 评价订单 - orderId:" << orderId;
+                    qDebug() << "[OrderHistoryPage] 当前评语:" << comment;
+                    qDebug() << "[OrderHistoryPage] 已有评分数量:" << dishRatings.size();
+                    
+                    // 使用 RateDialog，同时支持评语（限200字）和菜品评分（1~5）
+                    RateDialog dlg(orderId,
+                                   totalAmount,
+                                   time,
+                                   orderItems,
+                                   comment,       // 预置评语
+                                   dishRatings,   // 预置菜品评分
+                                   this);
 
                     if (dlg.exec() == QDialog::Accepted) {
+                        // 获取评语（限200字符）
                         const QString newComment = dlg.comment();
-                        const QMap<int,int> ratings = dlg.ratings(); // dish_id -> 1..5
-
-                        // 先本地更新评论
-                        m_comments[i] = newComment;
-                        rebuildList();
-                        // 后端实现 .....................................................
-
+                        // 获取 dish_id -> rating(1~5)
+                        const QMap<int,int> ratings = dlg.ratings();
+                        
+                        qDebug() << "[OrderHistoryPage] ========== 用户提交评价 ==========";
+                        qDebug() << "[OrderHistoryPage] 订单评语:" << newComment;
+                        qDebug() << "[OrderHistoryPage] 菜品评分数量:" << ratings.size();
+                        
+                        // 构造 dishes 数组
+                        QJsonArray dishArray;
+                        for (auto it = ratings.constBegin(); it != ratings.constEnd(); ++it) {
+                            QJsonObject dishObj;
+                            dishObj["dish_id"] = it.key();
+                            dishObj["rating"] = it.value();
+                            dishArray.append(dishObj);
+                            qDebug() << "[OrderHistoryPage]   菜品评分 - dish_id:" << it.key() << ", rating:" << it.value();
+                        }
+                        
+                        if (m_networkMgr) {
+                            qDebug() << "[OrderHistoryPage] 发送评价到服务器...";
+                            // 同时提交评语和菜品评分
+                            m_networkMgr->submitOrderCommentWithRatings(orderId, newComment, dishArray);
+                        } else {
+                            ElaMessageBar::error(ElaMessageBarType::BottomRight,
+                                               QStringLiteral("错误"),
+                                               QStringLiteral("网络管理器未初始化"),
+                                               2000, this);
+                        }
                     }
                 });
-
 
 
         m_listLayout->addWidget(card);

@@ -25,11 +25,9 @@ public:
     QString comment() const { return m_comment; }
 
 signals:
-    void editCommentRequested(int orderId, const QString& currentComment);
-    void rateRequested(int orderId); // 先留按钮/信号
+    void rateRequested(int orderId); // 评价按钮（评语+评分）
 
 private slots:
-    void onEditComment();
     void onRate();
 
 private:
@@ -47,6 +45,5 @@ private:
     ElaText* m_price = nullptr;     // 总价
     ElaText* m_commentText = nullptr; // 评论（可隐藏）
 
-    ElaPushButton* m_commentBtn = nullptr; // 评论(新增/修改)
-    ElaPushButton* m_rateBtn    = nullptr; // 评分(预留)
+    ElaPushButton* m_rateBtn = nullptr; // 评价按钮
 };

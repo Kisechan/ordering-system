@@ -6,6 +6,7 @@
 #include "ElaScrollArea.h"
 #include "ElaText.h"
 #include "ElaPushButton.h"
+#include "ElaPlainTextEdit.h"
 
 #include "RateDishCard.h"
 
@@ -13,16 +14,25 @@ RateDialog::RateDialog(int orderId,
                        double totalAmount,
                        const QString& time,
                        const QList<CartItem>& items,
+                       const QString& presetComment,
+                       const QMap<int, int>& presetRatings,
                        QWidget* parent)
     : QDialog(parent),
       m_orderId(orderId),
       m_totalAmount(totalAmount),
       m_time(time),
-      m_items(items)
+      m_items(items),
+      m_presetComment(presetComment),
+      m_presetRatings(presetRatings)
 {
-    setWindowTitle(QStringLiteral("订单评分"));
-    resize(560, 560);
+    setWindowTitle(QStringLiteral("订单评价"));
+    resize(560, 680);  // 增加高度以容纳评论区
     buildUI();
+}
+
+QString RateDialog::comment() const
+{
+    return m_edit ? m_edit->toPlainText().trimmed().left(200) : QString();
 }
 
 void RateDialog::buildUI()
@@ -71,9 +81,43 @@ void RateDialog::buildUI()
         root->addWidget(infoCard);
     }
 
+    // 评论区（限200字符）
+    {
+        auto* commentCard = new QWidget(this);
+        commentCard->setObjectName("CommentCard");
+        commentCard->setAttribute(Qt::WA_StyledBackground, true);
+        commentCard->setStyleSheet(
+            "#CommentCard {"
+            "background-color:#ffffff;"
+            "border:1px solid #d0d0d0;"
+            "border-radius:12px;"
+            "}"
+        );
 
+        auto* lay = new QVBoxLayout(commentCard);
+        lay->setContentsMargins(16, 12, 16, 12);
+        lay->setSpacing(8);
 
-    // 下方 scrollball
+        auto* title = new ElaText(QStringLiteral("订单评语（限200字）"), 17, commentCard);
+        title->setStyleSheet("color:#222222;");
+        lay->addWidget(title);
+
+        m_edit = new ElaPlainTextEdit(commentCard);
+        m_edit->setPlaceholderText(QStringLiteral("请输入您对本次订单的评价（可留空）"));
+        m_edit->setMinimumHeight(80);
+        m_edit->setMaximumHeight(100);
+        
+        // 预置评论
+        if (!m_presetComment.isEmpty()) {
+            m_edit->setPlainText(m_presetComment);
+        }
+        
+        lay->addWidget(m_edit);
+
+        root->addWidget(commentCard);
+    }
+
+    // 下方 scrollball - 菜品评分列表
     m_scroll = new ElaScrollArea(this);
     m_scroll->setWidgetResizable(true);
     m_scroll->setAlignment(Qt::AlignTop);
@@ -88,8 +132,10 @@ void RateDialog::buildUI()
         auto* card = new RateDishCard(m_listContainer);
         card->setItem(it);
 
-        // 默认先给 5 分（你也可以默认 3 分）
-        m_ratings[it.dish.dish_id] = 5;
+        // 使用预设评分（如果有），否则默认 5 分
+        int presetRating = m_presetRatings.value(it.dish.dish_id, 5);
+        card->setRating(presetRating);
+        m_ratings[it.dish.dish_id] = presetRating;
 
         connect(card, &RateDishCard::ratingChanged, this,
                 [this](int dishId, int rating){
@@ -108,7 +154,7 @@ void RateDialog::buildUI()
         auto* row = new QHBoxLayout();
         row->setContentsMargins(0, 0, 0, 0);
 
-        auto* ok = new ElaPushButton(QStringLiteral("提交评分"), this);
+        auto* ok = new ElaPushButton(QStringLiteral("提交评价"), this);
         ok->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
         ok->setMinimumHeight(40);
 
