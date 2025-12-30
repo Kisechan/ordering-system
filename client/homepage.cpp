@@ -5,10 +5,12 @@
 #include <QTimer>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QDebug>
 
 #include "ElaLineEdit.h"
 #include "ElaText.h"
 #include "ElaScrollArea.h"
+#include "ElaMessageBar.h"
 #include "NetworkManager.h"
 
 HomePage::HomePage(NetworkManager* networkMgr, QWidget* parent)
@@ -151,6 +153,21 @@ void HomePage::rebuildList(const QList<Dish>& dishes)
 
         connect(card, &DishCard::addToCartRequested, this,
                 [this, d](int /*dishId*/, int qty) {
+                    qDebug() << "[HomePage] 添加菜品到购物车:"
+                             << "name=" << d.name 
+                             << ", dish_id=" << d.dish_id 
+                             << ", qty=" << qty 
+                             << ", price=" << d.price;
+                    
+                    // 显示添加成功提示
+                    QString msg = QStringLiteral("已添加 %1 × %2 到购物车")
+                                    .arg(d.name)
+                                    .arg(qty);
+                    ElaMessageBar::success(ElaMessageBarType::BottomRight, 
+                                          QStringLiteral("成功"),
+                                          msg, 
+                                          2000, this);
+                    
                     emit addToCartRequested(d, qty);
                 });
 
@@ -205,6 +222,8 @@ void HomePage::showErrorState(const QString& error)
 
 void HomePage::onDishListReceived(const QJsonArray& dishes)
 {
+    qDebug() << "[HomePage] 收到菜品列表，开始解析... 菜品数量:" << dishes.size();
+    
     // 解析 QJsonArray 构造 Dish 对象列表
     QList<Dish> dishList;
     
@@ -220,14 +239,17 @@ void HomePage::onDishListReceived(const QJsonArray& dishes)
         d.url = dishObj["url"].toString();
         d.description = dishObj["description"].toString();
         
+        qDebug() << "[HomePage]   菜品:" << d.name << ", ID:" << d.dish_id << ", 价格:" << d.price;
         dishList.append(d);
     }
     
+    qDebug() << "[HomePage] 菜品解析完成，总计" << dishList.size() << "个";
     // 更新 UI 显示所有菜品
     setDishList(dishList);
 }
 
 void HomePage::onDishListError(const QString& error)
 {
+    qWarning() << "[HomePage] 菜品列表获取失败:" << error;
     showErrorState(error);
 }

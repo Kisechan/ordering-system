@@ -157,6 +157,8 @@ NetworkManager (网络通信)
 - `client/cartpage.h` / `client/cartpage.cpp`
 - `client/cartmanager.h` / `client/cartmanager.cpp`
 
+**实现状态** ✅ **已完成**
+
 **集成步骤**
 
 1. **修改 CartPage 构造函数，接收 NetworkManager**
@@ -240,6 +242,8 @@ NetworkManager (网络通信)
 
 **涉及文件**
 - `client/OrderHistoryPage.h` / `client/OrderHistoryPage.cpp`
+
+**实现状态** ✅ **已完成**
 
 **集成步骤**
 
@@ -409,8 +413,8 @@ NetworkManager (网络通信)
 ## 集成检查清单
 
 - [x] `HomePage` 已集成 `getDishList()` ✅
-- [ ] `CartPage` 已集成 `submitOrder()`
-- [ ] `OrderHistoryPage` 已集成 `getOrderList()` 和 `submitOrderComment()`
+- [x] `CartPage` 已集成 `submitOrder()` ✅
+- [x] `OrderHistoryPage` 已集成 `getOrderList()` 和 `submitOrderComment()` ✅
 - [ ] 呼叫服务员功能已添加
 - [x] 所有页面都正确传递 `NetworkManager` 指针 ✅
 - [x] 所有网络请求都有超时/错误处理 ✅

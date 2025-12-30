@@ -41,6 +41,7 @@ public:
     void submitOrder(const QJsonArray& dishes);
     void getOrderList();
     void submitOrderComment(int orderId, const QString& comment);
+    void submitOrderCommentWithRatings(int orderId, const QString& comment, const QJsonArray& dishes);
 
     // ========== 其他 ==========
     void callWaiter();
