@@ -1,4 +1,4 @@
-#include "OrderHistoryPage.h"
+#include "orderhistorypage.h"
 
 #include <QVBoxLayout>
 #include <QWidget>
@@ -9,7 +9,7 @@
 #include "ElaScrollArea.h"
 #include "ElaText.h"
 #include "ElaMessageBar.h"
-
+#include "reviewdialog.h"
 #include "ordercard.h"
 #include "commentdialog.h"
 #include "NetworkManager.h"
@@ -192,67 +192,27 @@ void OrderHistoryPage::rebuildList()
         QString comment = m_comments[i];
         QList<CartItem> orderItems = m_orderItems[i];
 
-        connect(card, &OrderCard::editCommentRequested, this,
-                [this, orderId](int /*cardOrderId*/, const QString& current) {
-                    qDebug() << "[OrderHistoryPage] ========== 打开评论对话框 ==========";
-                    qDebug() << "[OrderHistoryPage] 编辑订单评论 - orderId:" << orderId;
-                    qDebug() << "[OrderHistoryPage] 当前评论:" << current;
-                    
-                    CommentDialog dlg(orderId, current, this);
-                    if (dlg.exec() == QDialog::Accepted) {
-                        const QString newC = dlg.comment();
-                        qDebug() << "[OrderHistoryPage] 用户提交新评论:" << newC;
-
-                        if (m_networkMgr) {
-                            qDebug() << "[OrderHistoryPage] 发送评论到服务器...";
-                            m_networkMgr->submitOrderComment(orderId, newC);
-                        } else {
-                            ElaMessageBar::error(ElaMessageBarType::BottomRight,
-                                               QStringLiteral("错误"),
-                                               QStringLiteral("网络管理器未初始化"),
-                                               2000, this);
-                        }
-                    }
-                });
-
         connect(card, &OrderCard::rateRequested, this,
-                [this, orderId, totalAmount, time, orderItems](int /*cardOrderId*/) {
-                    qDebug() << "[OrderHistoryPage] ========== 打开评分对话框 ==========";
-                    qDebug() << "[OrderHistoryPage] 评分订单 - orderId:" << orderId;
-                    
-                    RateDialog dlg(orderId,
-                                   totalAmount,
-                                   time,
-                                   orderItems,
-                                   this);
+                [this, i](int orderId) {
+                    ReviewDialog dlg(orderId,
+                                     m_totalAmounts[i],
+                                     m_times[i],
+                                     m_orderItems[i],
+                                     m_comments[i],   // 预置评论：有就带进去，没有就是空
+                                     this);
 
                     if (dlg.exec() == QDialog::Accepted) {
-                        // 获取 dish_id -> rating(1~5)
-                        const QMap<int,int> ratings = dlg.ratings();
-                        qDebug() << "[OrderHistoryPage] ========== 用户提交评分 ==========";
-                        qDebug() << "[OrderHistoryPage] 获取评分数据，菜品数量:" << ratings.size();
-                        
-                        // 构造 dishes 数组
-                        QJsonArray dishArray;
-                        for (auto it = ratings.constBegin(); it != ratings.constEnd(); ++it) {
-                            QJsonObject dishObj;
-                            dishObj["dish_id"] = it.key();
-                            dishObj["rating"] = it.value();
-                            dishArray.append(dishObj);
-                            qDebug() << "[OrderHistoryPage]   菜品评分 - dish_id:" << it.key() << ", rating:" << it.value();
-                        }
-                        
-                        if (m_networkMgr) {
-                            qDebug() << "[OrderHistoryPage] 发送评分和评论到服务器...";
-                            m_networkMgr->submitOrderCommentWithRatings(orderId, "", dishArray);
-                        } else {
-                            ElaMessageBar::error(ElaMessageBarType::BottomRight,
-                                               QStringLiteral("错误"),
-                                               QStringLiteral("网络管理器未初始化"),
-                                               2000, this);
-                        }
+                        const QString newComment = dlg.comment();
+                        const QMap<int,int> ratings = dlg.ratings(); // dish_id -> 1..5
+
+                        // 先本地更新评论
+                        m_comments[i] = newComment;
+                        rebuildList();
+                        // 后端实现 .....................................................
+
                     }
                 });
+
 
 
         m_listLayout->addWidget(card);
