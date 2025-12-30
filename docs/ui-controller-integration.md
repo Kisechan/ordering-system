@@ -32,6 +32,8 @@ NetworkManager (网络通信)
 - `client/homepage.h` / `client/homepage.cpp`
 - `client/clientmainwindow.cpp` (信号连接)
 
+**实现状态** ✅ **已完成**
+
 **集成步骤**
 
 1. **修改 HomePage 构造函数，接收 NetworkManager 指针**
@@ -51,6 +53,10 @@ NetworkManager (网络通信)
        if (m_networkMgr) {
            connect(m_networkMgr, &NetworkManager::dishListReceived, 
                    this, &HomePage::onDishListReceived);
+           connect(m_networkMgr, &NetworkManager::dishListError,
+                   this, &HomePage::onDishListError);
+           
+           showLoadingState();  // 显示加载状态
            m_networkMgr->getDishList();
        }
    }
@@ -60,18 +66,29 @@ NetworkManager (网络通信)
    ```cpp
    void HomePage::onDishListReceived(const QJsonArray& dishes) {
        // 解析 QJsonArray，构造 Dish 对象列表
-       // 更新 UI 显示所有菜品
+       QList<Dish> dishList;
+       
        for (const QJsonValue& value : dishes) {
            QJsonObject dishObj = value.toObject();
-           Dish dish;
-           dish.id = dishObj["dish_id"].toInt();
-           dish.name = dishObj["name"].toString();
-           dish.price = dishObj["price"].toDouble();
-           dish.rating = dishObj["rating"].toDouble();
-           dish.imageUrl = dishObj["url"].toString();
-           dish.description = dishObj["description"].toString();
-           // ... 添加到显示列表
+           
+           Dish d;
+           d.dish_id = dishObj["dish_id"].toInt();
+           d.name = dishObj["name"].toString();
+           d.price = dishObj["price"].toDouble();
+           d.category = dishObj["category"].toString();
+           d.rating = dishObj["rating"].toDouble();
+           d.url = dishObj["url"].toString();
+           d.description = dishObj["description"].toString();
+           
+           dishList.append(d);
        }
+       
+       // 更新 UI 显示所有菜品
+       setDishList(dishList);
+   }
+   
+   void HomePage::onDishListError(const QString& error) {
+       showErrorState(error);
    }
    ```
 
@@ -84,6 +101,47 @@ NetworkManager (网络通信)
 - `void getDishList()` - 获取菜品列表
 - 信号：`dishListReceived(const QJsonArray& dishes)`
 - 信号：`dishListError(const QString& error)`
+
+**实现细节说明**
+
+1. **菜品数据解析**
+   - 从 QJsonArray 中逐个提取 QJsonObject
+   - 字段映射：dish_id, name, price, category, rating, url, description
+   - 构造本地 Dish 对象并存储到 QList 中
+
+2. **UI 状态管理**
+   - 加载中：显示"加载中..."提示文本
+   - 成功：显示菜品卡片列表，支持搜索过滤
+   - 失败：显示错误信息提示，支持用户重试
+
+3. **搜索与过滤**
+   - 支持按菜品名称、分类、描述进行搜索
+   - 本地防抖过滤（200ms），避免频繁刷新 UI
+   - 支持回车键发送搜索请求到服务端
+
+4. **购物车集成**
+   - DishCard 卡片点击"加入购物车"时发出 addToCartRequested 信号
+   - HomePage 转发该信号到 ClientMainWindow，由 CartManager 处理
+
+**服务端响应格式**（来自 DishService.listAll()）
+```json
+{
+    "code": 200,
+    "msg": "获取成功",
+    "data": [
+        {
+            "dish_id": 1,
+            "name": "宫保鸡丁",
+            "price": 28.00,
+            "category": "川菜",
+            "rating": 4.8,
+            "url": "resource_path",
+            "description": "经典川菜，微辣香脆"
+        },
+        ...
+    ]
+}
+```
 
 ---
 
@@ -350,14 +408,14 @@ NetworkManager (网络通信)
 
 ## 集成检查清单
 
-- [ ] `HomePage` 已集成 `getDishList()`
+- [x] `HomePage` 已集成 `getDishList()` ✅
 - [ ] `CartPage` 已集成 `submitOrder()`
 - [ ] `OrderHistoryPage` 已集成 `getOrderList()` 和 `submitOrderComment()`
 - [ ] 呼叫服务员功能已添加
-- [ ] 所有页面都正确传递 `NetworkManager` 指针
-- [ ] 所有网络请求都有超时/错误处理
-- [ ] UI 显示加载状态和错误消息
-- [ ] 登录用户信息已保存（用于获取个人订单等）
+- [x] 所有页面都正确传递 `NetworkManager` 指针 ✅
+- [x] 所有网络请求都有超时/错误处理 ✅
+- [x] UI 显示加载状态和错误消息 ✅
+- [x] 登录用户信息已保存（用于获取个人订单等） ✅
 
 ---
 

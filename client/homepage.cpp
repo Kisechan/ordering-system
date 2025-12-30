@@ -3,13 +3,16 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QTimer>
+#include <QJsonArray>
+#include <QJsonObject>
 
 #include "ElaLineEdit.h"
 #include "ElaText.h"
 #include "ElaScrollArea.h"
+#include "NetworkManager.h"
 
-HomePage::HomePage(QWidget* parent)
-    : ElaScrollPage(parent)
+HomePage::HomePage(NetworkManager* networkMgr, QWidget* parent)
+    : ElaScrollPage(parent), m_networkMgr(networkMgr)
 {
     setTitleVisible(false);
     setPageTitleSpacing(0);
@@ -57,16 +60,31 @@ HomePage::HomePage(QWidget* parent)
     connect(m_searchEdit, &ElaLineEdit::returnPressed,
             this, &HomePage::onSearchReturnPressed);
 
-    // ===== 演示：先放 1 个宫保鸡丁卡片 =====
-    Dish d;
-    d.dish_id = 1;
-    d.name = QStringLiteral("宫保鸡丁");
-    d.price = 28.00;
-    d.category = QStringLiteral("川菜");
-    d.rating = 4.8;
-    d.url = QStringLiteral(":/Image/vvan.jpg"); // 先用资源占位
-    d.description = QStringLiteral("经典川菜，微辣香脆");
-    setDishList({d,d,d,d,d,d,d,d,d,d,d,d,d,d});
+    // ===== NetworkManager 集成：连接信号 =====
+    if (m_networkMgr) {
+        connect(m_networkMgr, &NetworkManager::dishListReceived,
+                this, &HomePage::onDishListReceived);
+        connect(m_networkMgr, &NetworkManager::dishListError,
+                this, &HomePage::onDishListError);
+        
+        // 初始化时请求菜品列表
+        showLoadingState();
+        m_networkMgr->getDishList();
+    } else {
+        // NetworkManager 为空时显示演示数据
+        showLoadingState();
+        QTimer::singleShot(1000, this, [this]() {
+            Dish d;
+            d.dish_id = 1;
+            d.name = QStringLiteral("宫保鸡丁");
+            d.price = 28.00;
+            d.category = QStringLiteral("川菜");
+            d.rating = 4.8;
+            d.url = QStringLiteral(":/Image/vvan.jpg");
+            d.description = QStringLiteral("经典川菜，微辣香脆");
+            setDishList({d, d, d, d, d, d, d, d, d, d, d, d, d, d});
+        });
+    }
 }
 
 void HomePage::setDishList(const QList<Dish>& dishes)
@@ -120,10 +138,10 @@ void HomePage::rebuildList(const QList<Dish>& dishes)
 
     if (dishes.isEmpty()) {
         // 空态也放在列表里，但它在搜索框下面、不会重叠
-        auto* empty = new ElaText(QStringLiteral("没有找到相关菜品"), 14, m_listContainer);
-        empty->setStyleSheet("color:#888888;");
-        empty->setAlignment(Qt::AlignHCenter);
-        m_listLayout->addWidget(empty);
+        m_statusText = new ElaText(QStringLiteral("没有找到相关菜品"), 14, m_listContainer);
+        m_statusText->setStyleSheet("color:#888888;");
+        m_statusText->setAlignment(Qt::AlignHCenter);
+        m_listLayout->addWidget(m_statusText);
         return;
     }
 
@@ -138,4 +156,78 @@ void HomePage::rebuildList(const QList<Dish>& dishes)
 
         m_listLayout->addWidget(card);
     }
+}
+
+void HomePage::showLoadingState()
+{
+    // 清空列表
+    while (m_listLayout && m_listLayout->count() > 0) {
+        QLayoutItem* it = m_listLayout->takeAt(0);
+        if (!it) break;
+        if (QWidget* w = it->widget()) {
+            w->setParent(nullptr);
+            w->deleteLater();
+        }
+        delete it;
+    }
+    
+    // 显示加载状态
+    m_statusText = new ElaText(QStringLiteral("加载中..."), 14, m_listContainer);
+    m_statusText->setStyleSheet("color:#999999;");
+    m_statusText->setAlignment(Qt::AlignHCenter);
+    if (m_listLayout) {
+        m_listLayout->addWidget(m_statusText);
+    }
+}
+
+void HomePage::showErrorState(const QString& error)
+{
+    // 清空列表
+    while (m_listLayout && m_listLayout->count() > 0) {
+        QLayoutItem* it = m_listLayout->takeAt(0);
+        if (!it) break;
+        if (QWidget* w = it->widget()) {
+            w->setParent(nullptr);
+            w->deleteLater();
+        }
+        delete it;
+    }
+    
+    // 显示错误状态
+    QString errMsg = QStringLiteral("加载菜品列表失败: ") + error;
+    m_statusText = new ElaText(errMsg, 14, m_listContainer);
+    m_statusText->setStyleSheet("color:#ff6b6b;");
+    m_statusText->setAlignment(Qt::AlignHCenter);
+    if (m_listLayout) {
+        m_listLayout->addWidget(m_statusText);
+    }
+}
+
+void HomePage::onDishListReceived(const QJsonArray& dishes)
+{
+    // 解析 QJsonArray 构造 Dish 对象列表
+    QList<Dish> dishList;
+    
+    for (const QJsonValue& value : dishes) {
+        QJsonObject dishObj = value.toObject();
+        
+        Dish d;
+        d.dish_id = dishObj["dish_id"].toInt();
+        d.name = dishObj["name"].toString();
+        d.price = dishObj["price"].toDouble();
+        d.category = dishObj["category"].toString();
+        d.rating = dishObj["rating"].toDouble();
+        d.url = dishObj["url"].toString();
+        d.description = dishObj["description"].toString();
+        
+        dishList.append(d);
+    }
+    
+    // 更新 UI 显示所有菜品
+    setDishList(dishList);
+}
+
+void HomePage::onDishListError(const QString& error)
+{
+    showErrorState(error);
 }
