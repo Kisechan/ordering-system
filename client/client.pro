@@ -45,7 +45,9 @@ SOURCES += \
     cartpage.cpp \
     orderhistorypage.cpp \
     ordercard.cpp \
-    commentdialog.cpp
+    commentdialog.cpp \
+    ratedishcard.cpp \
+    ratedialog.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -66,7 +68,9 @@ HEADERS += \
     cartpage.h \
     orderhistorypage.h \
     ordercard.h \
-    commentdialog.h
+    commentdialog.h \
+    ratedishcard.h \
+    ratedialog.h
 
 FORMS += \
     mainwindow.ui

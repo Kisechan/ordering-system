@@ -1,5 +1,6 @@
 #pragma once
 #include "ElaScrollPage.h"
+#include "RateDialog.h"
 
 #include <QList>
 #include <QString>
@@ -31,6 +32,10 @@ public slots:
 
     // 后端更新评论后回调（可选）
     void applyCommentUpdateResult(int orderId, bool ok, const QString& message);
+
+    //void updateRatingsRequested(const QString& userId, int orderId, const QMap<int,int>& ratings);
+
+
 
 private:
     void rebuildList();

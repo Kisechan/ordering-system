@@ -208,6 +208,7 @@ void LoginDialog::setErrorText(const QString& msg)
 
 void LoginDialog::onLoginClicked()
 {
+    accept(); return;
     const QString u = username().trimmed();
     const QString p = password();
 

@@ -6,12 +6,12 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QMessageBox>
-
+#include <QDebug>
 #include "ElaScrollArea.h"
 #include "ElaText.h"
 
-#include "OrderCard.h"
-#include "CommentDialog.h"
+#include "ordercard.h"
+#include "commentdialog.h"
 
 OrderHistoryPage::OrderHistoryPage(const QString& userId, QWidget* parent)
     : ElaScrollPage(parent), m_userId(userId)
@@ -185,13 +185,26 @@ void OrderHistoryPage::rebuildList()
                     }
                 });
 
-        connect(card, &OrderCard::rateRequested, this,
-                [this](int orderId) {
-                    // 评分：先留着
-                    QMessageBox::information(this,
-                                             QStringLiteral("提示"),
-                                             QStringLiteral("评分功能稍后实现（order_id=%1）").arg(orderId));
-                });
+
+
+
+       connect(card, &OrderCard::rateRequested, this,
+            [this, i](int orderId) {
+
+            RateDialog dlg(orderId,
+                           m_totalAmounts[i],
+                           m_times[i],
+                           m_orderItems[i],
+                           this);
+
+            if (dlg.exec() == QDialog::Accepted) {
+                // 这里拿到 dish_id -> rating(1~5)
+                const QMap<int,int> r = dlg.ratings();
+                qDebug() << "假装评分";
+              //  emit updateRatingsRequested(m_userId, orderId, r);
+            }
+        });
+
 
         m_listLayout->addWidget(card);
     }

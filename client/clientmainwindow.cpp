@@ -82,14 +82,6 @@ ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, QWidget* parent)
             });
 
 
-    addPageNode(QStringLiteral("收货地址"),
-                new PlaceholderPage(QStringLiteral("收货地址（占位页）"), this),
-                ElaIconType::MapLocationDot);
-
-    addPageNode(QStringLiteral("消息"),
-                new PlaceholderPage(QStringLiteral("消息（占位页）"), this),
-                ElaIconType::Message);
-
     // 底部 Footer：账号管理
     QString accountKey;
     addFooterNode(QStringLiteral("账号管理"),
