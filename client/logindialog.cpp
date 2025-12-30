@@ -211,7 +211,6 @@ void LoginDialog::setErrorText(const QString& msg)
 
 void LoginDialog::onLoginClicked()
 {
-    accept(); return;
     const QString u = username().trimmed();
     const QString p = password();
 
@@ -233,11 +232,15 @@ void LoginDialog::onLoginSuccess()
 {
     m_loginBtn->setEnabled(true);
     setErrorText("");
+    
+    // 从 NetworkManager 获取登录成功后的用户信息
+    if (m_networkMgr) {
+        s_userId = m_networkMgr->getUserId();
+        s_username = m_networkMgr->getUsername();
+        qDebug() << "[LoginDialog] 登录成功: userId=" << s_userId << ", username=" << s_username;
+    }
+    
     // 登录成功，关闭对话框
-
-    s_username = username();
-    // s_userId = 返回的用户 Id
-
     accept();
 }
 

@@ -60,7 +60,7 @@ ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, int tmpuserId, QS
 
 
     // 购物车页面：展示已点菜品及结算
-    auto* cartPage = new CartPage(m_cart, this);
+    auto* cartPage = new CartPage(m_cart, m_networkMgr, this);
     addPageNode(QStringLiteral("购物车"), cartPage, ElaIconType::CartShopping);
 
     connect(cartPage, &CartPage::orderRequested, this, [this](const OrderDraft& draft){

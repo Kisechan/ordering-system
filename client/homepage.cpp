@@ -5,10 +5,12 @@
 #include <QTimer>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QDebug>
 
 #include "ElaLineEdit.h"
 #include "ElaText.h"
 #include "ElaScrollArea.h"
+#include "ElaMessageBar.h"
 #include "NetworkManager.h"
 
 HomePage::HomePage(NetworkManager* networkMgr, QWidget* parent)
@@ -151,6 +153,21 @@ void HomePage::rebuildList(const QList<Dish>& dishes)
 
         connect(card, &DishCard::addToCartRequested, this,
                 [this, d](int /*dishId*/, int qty) {
+                    qDebug() << "[HomePage] 添加菜品到购物车:"
+                             << "name=" << d.name 
+                             << ", dish_id=" << d.dish_id 
+                             << ", qty=" << qty 
+                             << ", price=" << d.price;
+                    
+                    // 显示添加成功提示
+                    QString msg = QStringLiteral("已添加 %1 × %2 到购物车")
+                                    .arg(d.name)
+                                    .arg(qty);
+                    ElaMessageBar::success(ElaMessageBarType::BottomRight, 
+                                          QStringLiteral("成功"),
+                                          msg, 
+                                          2000, this);
+                    
                     emit addToCartRequested(d, qty);
                 });
 
