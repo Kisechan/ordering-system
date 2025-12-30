@@ -84,7 +84,7 @@ DishManage_Page::DishManage_Page(QWidget* parent):
     d1.price = 88.00;
     d1.category = QStringLiteral("湘菜");
     d1.rating = 4.9;
-    d1.url = QStringLiteral(":/Image/vvan.jpg");
+    d1.url = QStringLiteral(":/include/Image/Moon.jpg");
     d1.description = QStringLiteral("good");
     // 真实情况每个dish不同
     setDishList({d,d1,d,d,d1,d,d,d,d1,d,d,d,d1,d});

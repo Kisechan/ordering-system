@@ -55,6 +55,7 @@ DishEditDialog::DishEditDialog(QWidget* parent)
     formLayout->addRow(QStringLiteral("评分："), m_ratingLabel);
 
     // 图片URL
+    // ！！！注意：可优化功能：点击从用户本机寻找并添加到项目文件中
     m_urlEdit = new ElaLineEdit(content);
     m_urlEdit->setPlaceholderText(QStringLiteral("请输入图片URL（如：:/Image/dish.jpg）"));
     m_urlEdit->setMinimumHeight(36);
@@ -109,7 +110,7 @@ void DishEditDialog::setDish(const Dish& dish)
         m_categoryEdit->setText(m_dish.category);
     }
     if (m_ratingLabel) {
-        m_ratingLabel->setText(QStringLiteral("⭐ %1 （不可修改）")
+        m_ratingLabel->setText(QStringLiteral("⭐ %1 ")
                               .arg(QString::number(m_dish.rating, 'f', 1)));
     }
     if (m_urlEdit) {

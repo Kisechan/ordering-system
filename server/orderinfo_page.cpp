@@ -36,7 +36,7 @@ OrderInfo_Page::OrderInfo_Page(QWidget* parent):
     title->setStyleSheet("font-weight: bold;");
 
     m_searchEdit = new ElaLineEdit(topBar);
-    m_searchEdit->setPlaceholderText(QStringLiteral("搜索订单号 / 用户名 / 备注"));
+    m_searchEdit->setPlaceholderText(QStringLiteral("搜索订单号 / 用户名 / 评论"));
     m_searchEdit->setClearButtonEnabled(true);
     m_searchEdit->setMinimumHeight(36);
     m_searchEdit->setFixedWidth(260);
@@ -128,7 +128,7 @@ OrderInfo_Page::OrderInfo_Page(QWidget* parent):
     o3.user_name = QStringLiteral("张三");
     o3.total_amount = 64.00;
     o3.create_time = QDateTime::fromString("2025-01-06 19:05:00", "yyyy-MM-dd hh:mm:ss");
-    o3.comment = QStringLiteral("速度快");
+    o3.comment = QStringLiteral("所以325是什么意思？？🤔难道是指明日方舟up主魔法ZC目录2024年3月11日的直播，彼时由龙哥哥今天又鸽了主办的明日方舟集成战略民间赛事仙术杯第五届正在如火如荼地展开中，本届仙术杯采取团队赛的形式，ZC 代表冠军厨小队的第二位出战，使用科学分队焰影苇草开但由于临场过于紧张运气Maybe和肉鸽基础不够扎实等原因在第三层关底利刃所指暴毙，局内结算325分啊，我还以为是出自明日方舟up主魔法ZC目录2024年3月11日的直播，彼时由龙哥哥今天又鸽了主办的明日方舟集成战略民间赛事仙术杯第五届正在如火如荼地展开中，本届仙术杯采取团队赛的形式，ZC 代表冠军厨小队的第二位出战，使用科学分队焰影苇草开但由于临场过于紧张运气Maybe和肉鸽基础不够扎实等原因在第三层关底利刃所指暴毙，局内结算325分吗？🤔");
 
     OrderDish od3;
     od3.dish = d1;
