@@ -56,14 +56,14 @@ CREATE TABLE `t_dish` (
 -- Records of t_dish
 -- ----------------------------
 INSERT INTO `t_dish` VALUES
-(1,'宫保鸡丁',28.00,'川菜',':/include/Image/gongbaojiding.jpg','经典川菜，微辣香脆'),
-(2,'白切鸡',32.00,'粤菜',':/include/Image/baiqieji.jpg','肉质鲜嫩，清淡爽口'),
-(3,'鱼香肉丝',32.00,'川菜',':/include/Image/yuxiangrousi.jpg','酸甜微辣，下饭神器'),
-(4,'麻婆豆腐',18.00,'川菜',':/include/Image/mapodoufu.jpg','麻辣鲜香，豆腐嫩滑'),
-(5,'回锅肉',36.00,'川菜',':/include/Image/huiguorou.jpg','肥而不腻，蒜苗香'),
-(6,'糖醋里脊',30.00,'鲁菜',':/include/Image/tangculiji.jpg','酸甜酥脆，老少皆宜'),
-(7,'红烧肉',38.00,'本帮',':/include/Image/hongshaorou.jpg','肥瘦相间，入口即化'),
-(8,'清蒸鲈鱼',48.00,'粤菜',':/include/Image/qingzhengluyu.jpg','鲜嫩清爽，葱姜提鲜');
+(1,'宫保鸡丁',28.00,'川菜',':/Image/gongbaojiding.jpg','经典川菜，微辣香脆'),
+(2,'白切鸡',32.00,'粤菜',':/Image/baiqieji.jpg','肉质鲜嫩，清淡爽口'),
+(3,'鱼香肉丝',32.00,'川菜',':/Image/yuxiangrousi.jpg','酸甜微辣，下饭神器'),
+(4,'麻婆豆腐',18.00,'川菜',':/Image/mapodoufu.jpg','麻辣鲜香，豆腐嫩滑'),
+(5,'回锅肉',36.00,'川菜',':/Image/huiguorou.jpg','肥而不腻，蒜苗香'),
+(6,'糖醋里脊',30.00,'鲁菜',':/Image/tangculiji.jpg','酸甜酥脆，老少皆宜'),
+(7,'红烧肉',38.00,'本帮',':/Image/hongshaorou.jpg','肥瘦相间，入口即化'),
+(8,'清蒸鲈鱼',48.00,'粤菜',':/Image/qingzhengluyu.jpg','鲜嫩清爽，葱姜提鲜');
 
 -- ----------------------------
 -- Table structure for t_order
