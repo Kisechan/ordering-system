@@ -121,6 +121,7 @@ void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
                 emit login(userSession.userId);
             }
         }
+        response["type"] = type;  // 回复相同的 type
     } else if (type == "register") {
         QString username = request["username"].toString();
         QString password = request["password"].toString();
@@ -128,6 +129,7 @@ void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
         // 取注册响应结果
         db::AuthService authService(conn);
         response = authService.registerUser(username, password);
+        response["type"] = type;  // 回复相同的 type
     } else if (type == "dish_list") {
         qDebug() << "[Server] ========== 处理菜品列表请求开始 ==========";
         qDebug() << "[Server] 客户端请求菜品列表";
@@ -157,7 +159,7 @@ void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
         emit callWaiter(userId);
         response["code"] = 200;
         response["msg"] = "服务员已收到您的呼叫，请耐心等待~";
-        qDebug()<<"已发送呼叫信号";
+        response["type"] = type;  // 回复相同的 type
     } else if (type == "order_submit") {
         int userId = userMap[socket].userId;
         QVector<db::DishCount> dishCountList;

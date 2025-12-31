@@ -44,6 +44,24 @@ ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, int tmpuserId, QS
         // ........................................................................
     }
 
+    // 连接呼叫服务员相关信号
+    if (m_networkMgr) {
+        connect(m_networkMgr, &NetworkManager::waiterCalled, this, [this]() {
+            ElaMessageBar::success(ElaMessageBarType::TopRight,
+                                   QStringLiteral("成功"),
+                                   QStringLiteral("服务员已收到您的呼叫，请稍候"),
+                                   3000,
+                                   this);
+        });
+        connect(m_networkMgr, &NetworkManager::waiterCallError, this, [this](const QString& error) {
+            ElaMessageBar::error(ElaMessageBarType::TopRight,
+                                 QStringLiteral("失败"),
+                                 QStringLiteral("呼叫服务员失败: ") + error,
+                                 3000,
+                                 this);
+        });
+    }
+
     // 左侧导航栏（Ela 内置）
     setIsNavigationBarEnable(true);
     setNavigationBarDisplayMode(ElaNavigationType::Maximal);
@@ -106,13 +124,16 @@ ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, int tmpuserId, QS
                 if (nodeType != ElaNavigationType::FooterNode) return;
 
                 if (nodeKey == callWaiterKey) {
-                    // TODO: m_networkMgr->callWaiter(userId);
-
-                    ElaMessageBar::success(ElaMessageBarType::TopRight,
-                                           QStringLiteral("提示"),
-                                           QStringLiteral("已呼叫服务员，请稍候"),
-                                           2000,
-                                           this);
+                    if (m_networkMgr && m_networkMgr->isConnected()) {
+                        qDebug() << "[ClientMainWindow] 呼叫服务员...";
+                        m_networkMgr->callWaiter();
+                    } else {
+                        ElaMessageBar::error(ElaMessageBarType::TopRight,
+                                             QStringLiteral("错误"),
+                                             QStringLiteral("网络未连接，无法呼叫服务员"),
+                                             2000,
+                                             this);
+                    }
                     return;
                 }
                 if (nodeKey == refreshKey) {
