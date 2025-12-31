@@ -5,6 +5,8 @@
 #include "ElaScrollPage.h"
 #include "servicerequestcard.h"
 #include <QList>
+#include <QSqlDatabase>
+#include <QMap>
 
 class ElaLineEdit;
 class ElaPushButton;
@@ -18,11 +20,17 @@ class ServiceRequest_Page : public ElaScrollPage
 public:
     explicit ServiceRequest_Page(QWidget* parent = nullptr);
 
+    void setDatabase(const QSqlDatabase& db);
     void initializeTables();  // 初始化10个桌号
-    int assignTable();        // 分配一个空闲桌号，返回桌号，-1表示无空闲桌号
+    int assignTable(int userId);  // 给用户分配一个空闲桌号，返回桌号，-1表示无空闲桌号
+    void releaseTable(int tableNumber);  // 释放桌号
     void setTableList(const QList<TableInfo>& tables);
     void addNewOrder(int tableNumber, int customerId, int orderId, const QList<DishInOrder>& dishes);
     void setTableCall(int tableNumber, bool hasCall);
+
+public slots:
+    void onCallWaiter(int userId);
+    void onRefresh();
 
 signals:
     void refreshRequested();                   // 刷新
@@ -31,25 +39,24 @@ signals:
     void callHandled(int tableNumber);         // 处理呼叫
 
 private slots:
-    void onRefresh();
     void onServeTable(int tableNumber);
     void onCompleteTable(int tableNumber);
     void onHandleCall(int tableNumber);
     void onDishServed(int tableNumber, const QString& dishName);
 
-public slots:  // 公开onRefresh供mainwindow调用
-
 private:
     void rebuildList(const QList<TableInfo>& tables);
-
     void setCardsEnabled(bool enabled);  // 启用/禁用所有卡片操作
+    int findTableByUserId(int userId);  // 根据用户ID查找桌号
 
 private:
     QWidget*        m_listContainer = nullptr;
     QVBoxLayout*    m_listLayout = nullptr;
     ElaPushButton*  m_refreshBtn = nullptr;
 
-    QList<TableInfo> m_allTables;  // 所有非空闲桌号
+    QList<TableInfo> m_allTables;  // 所有桌号（包括空闲和占用）
+    QMap<int, int>   m_userToTable;  // 用户ID到桌号的映射
+    QSqlDatabase     m_db;
 };
 
 #endif // SERVICEREQUEST_PAGE_H

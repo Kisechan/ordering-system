@@ -19,6 +19,10 @@ public:
     Dish dish() const;
     void setAddMode(bool isAdd);  // 设置为新增模式
 
+protected:
+    void showEvent(QShowEvent* event) override;
+
+
 private:
     Dish m_dish;
     bool m_isAddMode = false;  // 是否为新增模式

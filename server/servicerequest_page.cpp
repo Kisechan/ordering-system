@@ -8,12 +8,18 @@
 #include <QTimer>
 #include <QMessageBox>
 #include <QRandomGenerator>
+#include <QDebug>
 
 #include "ElaLineEdit.h"
 #include "ElaText.h"
 #include "ElaPushButton.h"
 #include "ElaScrollArea.h"
 #include "ElaMessageBar.h"
+
+#include "dao/UserDao.h"
+#include "dao/OrderDishDao.h"
+#include "dao/DishDao.h"
+#include <QSqlQuery>
 
 ServiceRequest_Page::ServiceRequest_Page(QWidget* parent)
     : ElaScrollPage(parent)
@@ -77,60 +83,43 @@ ServiceRequest_Page::ServiceRequest_Page(QWidget* parent)
     // 初始化10个桌号
     initializeTables();
 
-    // ===== 测试数据 =====
-    Dish testDish1;
-    testDish1.dish_id = 1;
-    testDish1.name = QStringLiteral("宫保鸡丁");
-    testDish1.price = 28.00;
-    testDish1.url = QStringLiteral(":/Image/vvan.jpg");
+    // ===== 测试：模拟用户登录并分配桌号 =====
+    qDebug() << "\n========== 开始测试桌号分配功能 ==========";
 
-    Dish testDish2;
-    testDish2.dish_id = 2;
-    testDish2.name = QStringLiteral("鱼香肉丝");
-    testDish2.price = 32.00;
-    testDish2.url = QStringLiteral(":/Image/vvan.jpg");
+    // 模拟3个用户登录
+    int testUserId1 = 1001;
+    int testUserId2 = 1002;
+    int testUserId3 = 1003;
 
-    // 3号桌测试数据
-    for (auto& table : m_allTables) {
-        if (table.table_number == 3) {
-            table.is_idle = false;
-            table.order_id = 5001;
-            table.status = TableServiceStatus::Pending;
+    qDebug() << "\n[测试] 模拟用户" << testUserId1 << "登录...";
+    int table1 = assignTable(testUserId1);
+    qDebug() << "[测试] 用户" << testUserId1 << "分配到桌号:" << table1;
 
-            DishInOrder dio1;
-            dio1.dish = testDish1;
-            dio1.quantity = 2;
-            dio1.isServed = false;
-            table.dishes.append(dio1);
+    qDebug() << "\n[测试] 模拟用户" << testUserId2 << "登录...";
+    int table2 = assignTable(testUserId2);
+    qDebug() << "[测试] 用户" << testUserId2 << "分配到桌号:" << table2;
 
-            DishInOrder dio2;
-            dio2.dish = testDish2;
-            dio2.quantity = 1;
-            dio2.isServed = false;
-            table.dishes.append(dio2);
-            break;
-        }
-    }
+    qDebug() << "\n[测试] 模拟用户" << testUserId3 << "登录...";
+    int table3 = assignTable(testUserId3);
+    qDebug() << "[测试] 用户" << testUserId3 << "分配到桌号:" << table3;
 
-    // 5号桌测试数据（正在处理，有呼叫）
-    for (auto& table : m_allTables) {
-        if (table.table_number == 5) {
-            table.is_idle = false;
-            table.order_id = 5002;
-            table.status = TableServiceStatus::Processing;
-            table.has_call = true;
+    // 验证映射关系
+    qDebug() << "\n[测试] 验证用户-桌号映射:";
+    qDebug() << "[测试] 用户" << testUserId1 << "-> 桌号" << findTableByUserId(testUserId1);
+    qDebug() << "[测试] 用户" << testUserId2 << "-> 桌号" << findTableByUserId(testUserId2);
+    qDebug() << "[测试] 用户" << testUserId3 << "-> 桌号" << findTableByUserId(testUserId3);
 
-            DishInOrder dio;
-            dio.dish = testDish1;
-            dio.quantity = 1;
-            dio.isServed = false;
-            table.dishes.append(dio);
-            break;
-        }
-    }
+    // 测试呼叫服务员
+    qDebug() << "\n[测试] 模拟用户" << testUserId2 << "呼叫服务员...";
+    onCallWaiter(testUserId2);
 
-    rebuildList(m_allTables);
+    qDebug() << "\n========== 桌号分配功能测试完成 ==========\n";
 
+}
+
+void ServiceRequest_Page::setDatabase(const QSqlDatabase& db)
+{
+    m_db = db;
 }
 
 void ServiceRequest_Page::setTableList(const QList<TableInfo>& tables)
@@ -142,12 +131,13 @@ void ServiceRequest_Page::setTableList(const QList<TableInfo>& tables)
 void ServiceRequest_Page::initializeTables()
 {
     m_allTables.clear();
+    m_userToTable.clear();
 
     // 初始化10个桌号，全部为空闲状态
     for (int i = 1; i <= 10; ++i) {
         TableInfo table;
         table.table_number = i;
-        table.customer_id = 0;
+        table.customer_id = 0;  // 0表示空闲
         table.order_id = 0;
         table.status = TableServiceStatus::Pending;
         table.is_idle = true;  // 初始全部空闲
@@ -158,23 +148,104 @@ void ServiceRequest_Page::initializeTables()
     rebuildList(m_allTables);
 }
 
-int ServiceRequest_Page::assignTable()
+int ServiceRequest_Page::assignTable(int userId)
 {
+    // 检查该用户是否已经有桌号
+    if (m_userToTable.contains(userId)) {
+        int existingTable = m_userToTable[userId];
+        qDebug() << "用户" << userId << "已分配桌号" << existingTable;
+        return existingTable;
+    }
+
     // 查找空闲桌号
-    QList<int> idleTables;
-    for (const auto& table : m_allTables) {
+    for (auto& table : m_allTables) {
         if (table.is_idle) {
-            idleTables.append(table.table_number);
+            // 分配桌号
+            table.is_idle = false;
+            table.customer_id = userId;
+            table.status = TableServiceStatus::Pending;
+
+            // 记录映射
+            m_userToTable[userId] = table.table_number;
+
+            qDebug() << "为用户" << userId << "分配桌号" << table.table_number;
+
+            // 刷新显示
+            rebuildList(m_allTables);
+
+            ElaMessageBar::success(ElaMessageBarType::BottomRight,
+                                  QStringLiteral("分配成功"),
+                                  QStringLiteral("用户ID %1 分配到 %2 号桌").arg(userId).arg(table.table_number),
+                                  2000, this);
+
+            return table.table_number;
         }
     }
 
-    if (idleTables.isEmpty()) {
-        return -1;  // 无空闲桌号
+    qDebug() << "无空闲桌号，无法为用户" << userId << "分配";
+    return -1;  // 无空闲桌号
+}
+
+void ServiceRequest_Page::releaseTable(int tableNumber)
+{
+    for (auto& table : m_allTables) {
+        if (table.table_number == tableNumber) {
+            // 从映射中移除
+            m_userToTable.remove(table.customer_id);
+
+            // 重置桌号状态
+            int userId = table.customer_id;
+
+            table.is_idle = true;
+            table.customer_id = 0;
+            table.order_id = 0;
+            table.status = TableServiceStatus::Pending;
+            table.has_call = false;
+            table.dishes.clear();
+
+            qDebug() << "释放桌号" << tableNumber << "，用户ID" << userId << "已离开";
+
+            rebuildList(m_allTables);
+
+            ElaMessageBar::information(ElaMessageBarType::BottomRight,
+                               QStringLiteral("桌号释放"),
+                               QStringLiteral("%1 号桌已空闲").arg(tableNumber),
+                               2000, this);
+            break;
+        }
+    }
+}
+
+int ServiceRequest_Page::findTableByUserId(int userId)
+{
+    return m_userToTable.value(userId, -1);
+}
+
+void ServiceRequest_Page::onCallWaiter(int userId)
+{
+    // 根据用户ID找到对应的桌号
+    int tableNumber = findTableByUserId(userId);
+    if (tableNumber == -1) {
+        qDebug() << "用户ID" << userId << "未分配桌号，无法呼叫服务员";
+        return;
     }
 
-    // 随机选择一个空闲桌号
-    int randomIndex = QRandomGenerator::global()->bounded(idleTables.size());
-    return idleTables[randomIndex];
+    // 设置呼叫标志
+    for (auto& table : m_allTables) {
+        if (table.table_number == tableNumber) {
+            table.has_call = true;
+
+            qDebug() << tableNumber << "号桌(用户ID:" << userId << ")呼叫服务员";
+
+            rebuildList(m_allTables);
+
+            ElaMessageBar::warning(ElaMessageBarType::BottomRight,
+                                  QStringLiteral("客户呼叫"),
+                                  QStringLiteral("%1 号桌（用户ID:%2）呼叫服务员").arg(tableNumber).arg(userId),
+                                  3000, this);
+            break;
+        }
+    }
 }
 
 void ServiceRequest_Page::addNewOrder(int tableNumber, int customerId, int orderId, const QList<DishInOrder>& dishes)
@@ -235,12 +306,17 @@ void ServiceRequest_Page::onRefresh()
 
     // 遍历所有非空闲桌号，根据order_id从数据库查询菜品
     rebuildList(m_allTables);
+    for(auto& table:m_allTables){
+        qDebug()<<table.table_number<<"号桌对应用户"<<table.customer_id;
+    }
 
     emit refreshRequested();
     ElaMessageBar::information(ElaMessageBarType::BottomRight,
                               QStringLiteral("提示"),
                               QStringLiteral("正在刷新桌号服务列表..."),
                               1500, this);
+
+
 }
 
 void ServiceRequest_Page::setCardsEnabled(bool enabled)
@@ -460,3 +536,4 @@ void ServiceRequest_Page::onDishServed(int tableNumber, const QString& dishName)
         }
     }
 }
+

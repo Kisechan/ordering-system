@@ -19,6 +19,7 @@
 #include "ElaMessageBar.h"
 
 #include "dao/DishDao.h"
+#include "DbManager.h"
 
 DishManage_Page::DishManage_Page(QWidget* parent):
     ElaScrollPage(parent)
@@ -113,20 +114,21 @@ void DishManage_Page::setDatabase(const QSqlDatabase& db)
 
 void DishManage_Page::loadDishesFromDatabase()
 {
-    if (!m_db.isValid()) {
+    QSqlDatabase db = db::DbManager::instance().db();
+    if (!db.isValid()) {
         ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
                             QStringLiteral("数据库连接无效"), 2000, this);
         return;
     }
 
-    if (!m_db.isOpen()) {
+    if (!db.isOpen()) {
         ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
                             QStringLiteral("数据库连接未打开"), 2000, this);
         return;
     }
 
     // 使用DishDao查询菜品
-    db::DishDao dishDao(m_db);
+    db::DishDao dishDao(db);
     QJsonObject result = dishDao.listAll();
 
     int code = result.value("code").toInt();
@@ -160,14 +162,15 @@ void DishManage_Page::loadDishesFromDatabase()
 
 bool DishManage_Page::saveDishToDatabase(const Dish& dish)
 {
-    if (!m_db.isValid() || !m_db.isOpen()) {
+    QSqlDatabase db = db::DbManager::instance().db();
+    if (!db.isValid() || !db.isOpen()) {
         ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
                             QStringLiteral("数据库连接未打开"), 2000, this);
         return false;
     }
 
     // 使用DishDao插入菜品
-    db::DishDao dishDao(m_db);
+    db::DishDao dishDao(db);
 
     QJsonObject dishObj;
     dishObj.insert("name", dish.name);
@@ -190,14 +193,15 @@ bool DishManage_Page::saveDishToDatabase(const Dish& dish)
 
 bool DishManage_Page::updateDishInDatabase(const Dish& dish)
 {
-    if (!m_db.isValid() || !m_db.isOpen()) {
+    QSqlDatabase db = db::DbManager::instance().db();
+    if (!db.isValid() || !db.isOpen()) {
         ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
                             QStringLiteral("数据库连接未打开"), 2000, this);
         return false;
     }
 
     // 使用DishDao更新菜品
-    db::DishDao dishDao(m_db);
+    db::DishDao dishDao(db);
 
     QJsonObject dishObj;
     dishObj.insert("dish_id", dish.dish_id);
@@ -221,14 +225,15 @@ bool DishManage_Page::updateDishInDatabase(const Dish& dish)
 
 bool DishManage_Page::deleteDishFromDatabase(int dishId)
 {
-    if (!m_db.isValid() || !m_db.isOpen()) {
+    QSqlDatabase db = db::DbManager::instance().db();
+    if (!db.isValid() || !db.isOpen()) {
         ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
                             QStringLiteral("数据库连接未打开"), 2000, this);
         return false;
     }
 
     // 使用DishDao删除菜品
-    db::DishDao dishDao(m_db);
+    db::DishDao dishDao(db);
     QJsonObject result = dishDao.deleteDish(dishId);
 
     int code = result.value("code").toInt();
@@ -475,3 +480,4 @@ void DishManage_Page::onAddDish()
 
     dialog->deleteLater();
 }
+

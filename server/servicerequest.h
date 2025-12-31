@@ -25,7 +25,7 @@ struct DishInOrder {
 // 桌号信息结构
 struct TableInfo {
     int table_number;                    // 桌号
-    int customer_id;                     // 顾客ID
+    int customer_id;                     // 顾客ID（0表示空闲）
     int order_id;                        // 订单号
     TableServiceStatus status;           // 服务状态
     bool is_idle;                        // 是否空闲（空闲则不在UI显示）
