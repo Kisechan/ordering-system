@@ -17,6 +17,9 @@ public:
     void setTableInfo(const TableInfo& table);
     TableInfo getTableInfo() const { return m_table; }
 
+protected:
+    void showEvent(QShowEvent* event) override;
+
 signals:
     void dishServed(int tableNumber, const QString& dishName);
 

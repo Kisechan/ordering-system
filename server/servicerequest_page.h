@@ -28,8 +28,10 @@ public:
     void addNewOrder(int tableNumber, int customerId, int orderId, const QList<DishInOrder>& dishes);
     void setTableCall(int tableNumber, bool hasCall);
 
-public slots:
-    void onCallWaiter(int userId);
+public slots:    
+    void onUserLogin(int userId);     // 用户登录时分配桌号
+    void onCallWaiter(int userId);    
+    void onSubmitOrder(int orderId, int userId);  // 新订单提交时添加菜品到上菜队列
     void onRefresh();
 
 signals:

@@ -28,12 +28,18 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, &ElaWindow::navigationNodeClicked,
             this, &MainWindow::onPageChanged);
 
-    // 连接Server的callWaiter信号到ServiceRequest_Page
+    // 连接Server信号到ServiceRequest_Page
     Server* server = Server::getInstance();
-    if (server && service_request_page_) {
-        connect(server, &Server::callWaiter, service_request_page_, &ServiceRequest_Page::onCallWaiter);
-        qDebug() << "已连接Server的callWaiter信号到ServiceRequest_Page";
-    }
+
+    // 连接登录信号 - 自动分配桌号
+    connect(server, &Server::login, service_request_page_, &ServiceRequest_Page::onUserLogin);
+    // 连接呼叫服务员信号
+    connect(server, &Server::callWaiter, service_request_page_, &ServiceRequest_Page::onCallWaiter);
+        qDebug() << "已连接Server信号到ServiceRequest_Page（login, callWaiter）";
+
+    // 连接提交订单信号 - 添加菜品到上菜队列
+    connect(server, &Server::submitOrder, service_request_page_, &ServiceRequest_Page::onSubmitOrder);
+        qDebug() << "已连接Server信号到ServiceRequest_Page（login, callWaiter, submitOrder）";
 
 }
 

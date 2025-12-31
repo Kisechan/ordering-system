@@ -9,6 +9,8 @@
 #include <QMessageBox>
 #include <QRandomGenerator>
 #include <QDebug>
+#include <QSqlQuery>
+#include <QSqlError>
 
 #include "ElaLineEdit.h"
 #include "ElaText.h"
@@ -219,6 +221,111 @@ void ServiceRequest_Page::releaseTable(int tableNumber)
 int ServiceRequest_Page::findTableByUserId(int userId)
 {
     return m_userToTable.value(userId, -1);
+}
+
+void ServiceRequest_Page::onUserLogin(int userId)
+{
+    qDebug() << "[ServiceRequest_Page] 收到用户登录信号，用户ID:" << userId;
+
+    // 为用户分配桌号
+    int tableNumber = assignTable(userId);
+
+    if (tableNumber != -1) {
+        qDebug() << "[ServiceRequest_Page] 用户" << userId << "分配到桌号" << tableNumber;
+    } else {
+        qDebug() << "[ServiceRequest_Page] 无空闲桌号，用户" << userId << "分配失败";
+        ElaMessageBar::warning(ElaMessageBarType::BottomRight,
+                              QStringLiteral("桌号已满"),
+                              QStringLiteral("当前所有桌号已被占用，请稍后再试"),
+                              3000, this);
+    }
+}
+
+void ServiceRequest_Page::onSubmitOrder(int orderId, int userId)
+{
+    qDebug() << "[ServiceRequest_Page] 收到新订单信号，订单ID:" << orderId << ", 用户ID:" << userId;
+
+    // 根据userId查找对应的桌号
+    int tableNumber = findTableByUserId(userId);
+    if (tableNumber == -1) {
+        qDebug() << "[ServiceRequest_Page] 用户" << userId << "未分配桌号，无法添加订单";
+        return;
+    }
+
+    // 查找对应的桌号
+    TableInfo* foundTable = nullptr;
+    for (auto& table : m_allTables) {
+        if (table.table_number == tableNumber) {
+            foundTable = &table;
+            break;
+        }
+    }
+
+    if (!foundTable) {
+        qDebug() << "[ServiceRequest_Page] 未找到桌号" << tableNumber;
+        return;
+    }
+
+    // 更新订单ID
+    foundTable->order_id = orderId;
+
+    // 根据状态更新：如果是已完成，改为待处理；否则保持不变
+    if (foundTable->status == TableServiceStatus::Completed) {
+        foundTable->status = TableServiceStatus::Pending;
+        qDebug() << "[ServiceRequest_Page] 桌号" << tableNumber << "状态从已完成改为待处理";
+    }
+
+    // 从数据库查询订单的菜品信息
+    if (!m_db.isValid() || !m_db.isOpen()) {
+        qDebug() << "[ServiceRequest_Page] 数据库未连接，无法查询订单菜品";
+        return;
+    }
+
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        SELECT d.dish_id, d.name, d.price, d.category, d.description, d.url,
+               od.count
+        FROM t_order_dish od
+        JOIN t_dish d ON od.dish_id = d.dish_id
+        WHERE od.order_id = ?
+        ORDER BY d.dish_id ASC
+    )");
+    query.addBindValue(orderId);
+
+    if (!query.exec()) {
+        qDebug() << "[ServiceRequest_Page] 查询订单菜品失败:" << query.lastError().text();
+        return;
+    }
+
+    // 添加菜品到上菜队列
+    int dishCount = 0;
+    while (query.next()) {
+        Dish dish;
+        dish.dish_id = query.value("dish_id").toInt();
+        dish.name = query.value("name").toString();
+        dish.price = query.value("price").toDouble();
+        dish.category = query.value("category").toString();
+        dish.description = query.value("description").toString();
+        dish.url = query.value("url").toString();
+
+        DishInOrder dishInOrder;
+        dishInOrder.dish = dish;
+        dishInOrder.quantity = query.value("count").toInt();
+        dishInOrder.isServed = false;  // 新订单的菜品都是未送达状态
+
+        foundTable->dishes.append(dishInOrder);
+        dishCount++;
+    }
+
+    qDebug() << "[ServiceRequest_Page] 订单" << orderId << "添加了" << dishCount << "个菜品到" << tableNumber << "号桌";
+
+    // 刷新UI显示
+    rebuildList(m_allTables);
+
+    ElaMessageBar::information(ElaMessageBarType::BottomRight,
+                              QStringLiteral("新订单"),
+                              QStringLiteral("%1 号桌有新订单（%2个菜品）").arg(tableNumber).arg(dishCount),
+                              2000, this);
 }
 
 void ServiceRequest_Page::onCallWaiter(int userId)
