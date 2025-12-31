@@ -103,6 +103,7 @@ void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
     if (type == "login") {
         QString userName = request["username"].toString();
         QString password = request["password"].toString();
+        int tableId = request["table_id"].toInt();
 
         // 获取登录响应结果
         db::AuthService authService(conn);
@@ -117,6 +118,7 @@ void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
                 userSession.username = data["username"].toString();
                 userMap[socket] = userSession;
                 qDebug() << "[Server] User logged in: " << userSession.username << " ID: " << userSession.userId;
+                emit login(userSession.userId);
             }
         }
     } else if (type == "register") {
@@ -150,8 +152,9 @@ void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
         response["type"] = type;  // 回复相同的 type
     } else if (type == "call_waiter") {
         // 发送呼叫服务员信号
+        int userId = userMap[socket].userId;
         QString username = userMap[socket].username;
-        emit callWaiter(username);
+        emit callWaiter(userId);
         response["code"] = 200;
         response["msg"] = "服务员已收到您的呼叫，请耐心等待~";
     } else if (type == "order_submit") {
@@ -170,6 +173,17 @@ void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
         db::OrderService orderService(conn);
         response = orderService.submitOrder(userId, dishCountList);
         response["type"] = type;  // 回复相同的 type
+
+        if (response.value("code").toInt() == 200) {
+            int orderId = response
+                .value("data")
+                .toObject()
+                .value("order_id")
+                .toInt();
+
+            emit submitOrder(orderId, userId);
+        }
+
     } else if (type == "order_list") {
         qDebug() << "[Server] ========== 处理订单列表请求开始 ==========";
         int userId = userMap[socket].userId;
