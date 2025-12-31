@@ -57,7 +57,11 @@ QJsonObject OrderService::submitOrder(int userId, const QVector<DishCount>& dish
         return makeErr(500, "提交事务失败: " + db_.lastError().text());
     }
 
-    return makeOk(QJsonValue::Null, "订单成功提交");
+    QJsonObject data;
+    data.insert("order_id", orderId);
+    data.insert("total_amount", total);
+
+    return makeOk(data, "订单成功提交");
 }
 
 
