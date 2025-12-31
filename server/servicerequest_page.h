@@ -22,13 +22,13 @@ public:
 
     void setDatabase(const QSqlDatabase& db);
     void initializeTables();  // 初始化10个桌号
-    int assignTable(int userId);  // 给用户分配一个空闲桌号，返回桌号，-1表示无空闲桌号
     void releaseTable(int tableNumber);  // 释放桌号
     void setTableList(const QList<TableInfo>& tables);
     void addNewOrder(int tableNumber, int customerId, int orderId, const QList<DishInOrder>& dishes);
     void setTableCall(int tableNumber, bool hasCall);
 
 public slots:
+    int assignTable(int userId);  // 给用户分配一个空闲桌号，返回桌号，-1表示无空闲桌号
     void onCallWaiter(int userId);
     void onRefresh();
 

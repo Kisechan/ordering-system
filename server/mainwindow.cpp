@@ -31,8 +31,13 @@ MainWindow::MainWindow(QWidget *parent) :
     // 连接Server的callWaiter信号到ServiceRequest_Page
     Server* server = Server::getInstance();
     if (server && service_request_page_) {
+        // 连接呼叫服务员信号
         connect(server, &Server::callWaiter, service_request_page_, &ServiceRequest_Page::onCallWaiter);
         qDebug() << "已连接Server的callWaiter信号到ServiceRequest_Page";
+        
+        // 连接用户登录信号，自动分配桌号
+        connect(server, &Server::login, service_request_page_, &ServiceRequest_Page::assignTable);
+        qDebug() << "已连接Server的login信号到ServiceRequest_Page::assignTable";
     }
 
 }
