@@ -87,7 +87,6 @@ void MainWindow::initContent() {
 
 }
 
-
 void MainWindow::setDatabase(const QSqlDatabase& db)
 {
     m_db = db;
@@ -97,6 +96,12 @@ void MainWindow::setDatabase(const QSqlDatabase& db)
         order_info_page_->setDatabase(m_db);
         // 初始加载订单数据
         order_info_page_->loadOrdersFromDatabase();
+    }
+
+    if (dish_manage_page_) {
+        dish_manage_page_->setDatabase(m_db);
+        // 初始加载菜品数据
+        dish_manage_page_->loadDishesFromDatabase();
     }
 }
 
@@ -113,26 +118,15 @@ void MainWindow::onPageChanged(ElaNavigationType::NavigationNodeType /*nodeType*
 
     // 当切换到菜品管理页面时刷新数据
     if (nodeKey == QStringLiteral("菜品管理") && dish_manage_page_) {
-
-        // TODO: 从数据库重新加载菜品列表
         qDebug() << "刷新菜品管理页面数据";
-        // 示例：重新设置演示数据
-        /*
-        Dish d;
-        d.dish_id = 1;
-        d.name = QStringLiteral("宫保鸡丁");
-        d.price = 28.00;
-        d.category = QStringLiteral("川菜");
-        d.rating = 4.8;
-        d.url = QStringLiteral(":/Image/vvan.jpg");
-        d.description = QStringLiteral("经典川菜，微辣香脆");
-        dish_manage_page_->setDishList({d, d, d, d});
-        */
+        // 从数据库重新加载菜品列表
+        if (m_db.isOpen()) {
+            dish_manage_page_->loadDishesFromDatabase();
+        }
     }
 
     // 当切换到订单管理页面时刷新数据
     if (nodeKey == QStringLiteral("订单管理") && order_info_page_) {
-
         qDebug() << "刷新订单管理页面数据";
         // 从数据库重新加载订单列表
         if (m_db.isOpen()) {

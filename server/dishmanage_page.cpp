@@ -7,12 +7,18 @@
 #include <QAbstractButton>
 #include <QMessageBox>
 #include <QDebug>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QJsonObject>
+#include <QJsonArray>
 
 #include "ElaLineEdit.h"
 #include "ElaText.h"
 #include "ElaPushButton.h"
 #include "ElaScrollArea.h"
 #include "ElaMessageBar.h"
+
+#include "dao/DishDao.h"
 
 DishManage_Page::DishManage_Page(QWidget* parent):
     ElaScrollPage(parent)
@@ -100,6 +106,141 @@ void DishManage_Page::onSearchTextChanged(const QString& text)
     m_searchDebounce->start();
 }
 
+void DishManage_Page::setDatabase(const QSqlDatabase& db)
+{
+    m_db = db;
+}
+
+void DishManage_Page::loadDishesFromDatabase()
+{
+    if (!m_db.isValid()) {
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
+                            QStringLiteral("数据库连接无效"), 2000, this);
+        return;
+    }
+
+    if (!m_db.isOpen()) {
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
+                            QStringLiteral("数据库连接未打开"), 2000, this);
+        return;
+    }
+
+    // 使用DishDao查询菜品
+    db::DishDao dishDao(m_db);
+    QJsonObject result = dishDao.listAll();
+
+    int code = result.value("code").toInt();
+    if (code != 200) {
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
+                            result.value("msg").toString(), 2000, this);
+        return;
+    }
+
+    QJsonArray dishArray = result.value("data").toArray();
+    QList<Dish> dishes;
+
+    for (const QJsonValue& val : dishArray) {
+        QJsonObject obj = val.toObject();
+        Dish dish;
+        dish.dish_id = obj.value("dish_id").toInt();
+        dish.name = obj.value("name").toString();
+        dish.price = obj.value("price").toDouble();
+        dish.category = obj.value("category").toString();
+        dish.url = obj.value("url").toString();
+        dish.description = obj.value("description").toString();
+        dish.rating = obj.value("rating").toDouble();
+
+        dishes.append(dish);
+    }
+
+    setDishList(dishes);
+    ElaMessageBar::success(ElaMessageBarType::BottomRight, QStringLiteral("成功"),
+                          QStringLiteral("加载了 %1 个菜品").arg(dishes.size()), 1500, this);
+}
+
+bool DishManage_Page::saveDishToDatabase(const Dish& dish)
+{
+    if (!m_db.isValid() || !m_db.isOpen()) {
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
+                            QStringLiteral("数据库连接未打开"), 2000, this);
+        return false;
+    }
+
+    // 使用DishDao插入菜品
+    db::DishDao dishDao(m_db);
+
+    QJsonObject dishObj;
+    dishObj.insert("name", dish.name);
+    dishObj.insert("price", dish.price);
+    dishObj.insert("category", dish.category);
+    dishObj.insert("url", dish.url);
+    dishObj.insert("description", dish.description);
+
+    QJsonObject result = dishDao.insertDish(dishObj);
+
+    int code = result.value("code").toInt();
+    if (code != 200) {
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
+                            QStringLiteral("添加菜品失败: ") + result.value("msg").toString(), 2000, this);
+        return false;
+    }
+
+    return true;
+}
+
+bool DishManage_Page::updateDishInDatabase(const Dish& dish)
+{
+    if (!m_db.isValid() || !m_db.isOpen()) {
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
+                            QStringLiteral("数据库连接未打开"), 2000, this);
+        return false;
+    }
+
+    // 使用DishDao更新菜品
+    db::DishDao dishDao(m_db);
+
+    QJsonObject dishObj;
+    dishObj.insert("dish_id", dish.dish_id);
+    dishObj.insert("name", dish.name);
+    dishObj.insert("price", dish.price);
+    dishObj.insert("category", dish.category);
+    dishObj.insert("url", dish.url);
+    dishObj.insert("description", dish.description);
+
+    QJsonObject result = dishDao.updateDish(dishObj);
+
+    int code = result.value("code").toInt();
+    if (code != 200) {
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
+                            QStringLiteral("更新菜品失败: ") + result.value("msg").toString(), 2000, this);
+        return false;
+    }
+
+    return true;
+}
+
+bool DishManage_Page::deleteDishFromDatabase(int dishId)
+{
+    if (!m_db.isValid() || !m_db.isOpen()) {
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
+                            QStringLiteral("数据库连接未打开"), 2000, this);
+        return false;
+    }
+
+    // 使用DishDao删除菜品
+    db::DishDao dishDao(m_db);
+    QJsonObject result = dishDao.deleteDish(dishId);
+
+    int code = result.value("code").toInt();
+    if (code != 200) {
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
+                            QStringLiteral("删除菜品失败: ") + result.value("msg").toString(), 2000, this);
+        return false;
+    }
+
+    return true;
+}
+
 void DishManage_Page::setDishList(const QList<Dish>& dishes)
 {
     m_allDishes = dishes;
@@ -185,23 +326,24 @@ void DishManage_Page::onEditDish(int dishId)
     // 显示编辑对话框
     auto* dialog = new DishEditDialog(this);
     dialog->setDish(*foundDish);
+    dialog->setAddMode(false);
 
     if (dialog->exec() == QDialog::Accepted) {
         Dish updatedDish = dialog->dish();
 
-        // 更新本地数据
-        *foundDish = updatedDish;
+        // 更新到数据库
+        if (updateDishInDatabase(updatedDish)) {
+            // 更新本地数据
+            *foundDish = updatedDish;
 
-        // 发射信号通知外部（用于数据库更新）
-        emit dishUpdated(updatedDish);
+            // 刷新显示
+            applyFilterNow();
 
-        // 刷新显示
-        applyFilterNow();
-
-        ElaMessageBar::success(ElaMessageBarType::BottomRight,
-                              QStringLiteral("成功"),
-                              QStringLiteral("菜品信息已更新"),
-                              2000, this);
+            ElaMessageBar::success(ElaMessageBarType::BottomRight,
+                                  QStringLiteral("成功"),
+                                  QStringLiteral("菜品信息已更新"),
+                                  2000, this);
+        }
     }
 
     dialog->deleteLater();
@@ -240,19 +382,19 @@ void DishManage_Page::onDeleteDish(int dishId)
     confirmBox.button(QMessageBox::No)->setText(QStringLiteral("取消"));
 
     if (confirmBox.exec() == QMessageBox::Yes) {
-        // 发射信号通知外部删除数据库记录
-        emit dishDeleted(dishId);
+        // 从数据库删除
+        if (deleteDishFromDatabase(dishId)) {
+            // 从本地列表中移除
+            m_allDishes.removeAt(index);
 
-        // 从本地列表中移除
-        m_allDishes.removeAt(index);
+            // 刷新显示
+            applyFilterNow();
 
-        // 刷新显示
-        applyFilterNow();
-
-        ElaMessageBar::success(ElaMessageBarType::BottomRight,
-                              QStringLiteral("成功"),
-                              QStringLiteral("菜品已删除"),
-                              2000, this);
+            ElaMessageBar::success(ElaMessageBarType::BottomRight,
+                                  QStringLiteral("成功"),
+                                  QStringLiteral("菜品已删除"),
+                                  2000, this);
+        }
     }
 }
 
@@ -279,8 +421,6 @@ void DishManage_Page::onAddDish()
         Dish dish = dialog->dish();
 
         // ===== 字段验证 =====
-
-        // 验证必填字段
         if (dish.name.trimmed().isEmpty()) {
             ElaMessageBar::warning(ElaMessageBarType::BottomRight,
                                   QStringLiteral("验证失败"),
@@ -321,30 +461,16 @@ void DishManage_Page::onAddDish()
         // 评分默认为0（未评分）
         dish.rating = 0.0;
 
-        // 生成临时ID（实际应由数据库生成并返回）
-        // 这里使用当前列表最大ID+1作为临时ID
-        int maxId = 0;
-        for (const auto& d : m_allDishes) {
-            if (d.dish_id > maxId) {
-                maxId = d.dish_id;
-            }
+        // 保存到数据库
+        if (saveDishToDatabase(dish)) {
+            // 重新从数据库加载所有菜品（包括新生成的ID）
+            loadDishesFromDatabase();
+
+            ElaMessageBar::success(ElaMessageBarType::BottomRight,
+                                  QStringLiteral("成功"),
+                                  QStringLiteral("菜品添加成功"),
+                                  2000, this);
         }
-        dish.dish_id = maxId + 1;
-
-        // ===== 添加到本地列表 =====
-        m_allDishes.append(dish);
-
-        // ===== 发射信号通知外部添加到数据库 =====
-        emit dishAdded(dish);
-
-        // ===== 刷新显示 =====
-        applyFilterNow();
-
-        // ===== 显示成功提示 =====
-        ElaMessageBar::success(ElaMessageBarType::BottomRight,
-                              QStringLiteral("成功"),
-                              QStringLiteral("菜品添加成功"),
-                              2000, this);
     }
 
     dialog->deleteLater();

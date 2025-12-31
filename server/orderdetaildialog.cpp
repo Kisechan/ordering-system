@@ -8,6 +8,7 @@
 #include <QSqlError>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QDebug>
 
 #include "ElaText.h"
 #include "ElaScrollArea.h"
@@ -128,7 +129,10 @@ void OrderDetailDialog::setDatabase(const QSqlDatabase& db)
 
 void OrderDetailDialog::loadOrderDetailFromDatabase()
 {
-    if (!m_db.isOpen()) return;
+    if (!m_db.isValid() || !m_db.isOpen()) {
+        qDebug() << "订单详情：数据库未打开";
+        return;
+    }
 
     // 查询订单基本信息和关联的用户名
     QSqlQuery query(m_db);
@@ -140,7 +144,12 @@ void OrderDetailDialog::loadOrderDetailFromDatabase()
     )");
     query.addBindValue(m_order.order_id);
 
-    if (query.exec() && query.next()) {
+    if (!query.exec()) {
+        qDebug() << "查询订单基本信息失败:" << query.lastError().text();
+        return;
+    }
+
+    if (query.next()) {
         m_order.user_name = query.value("username").toString();
         m_order.total_amount = query.value("total_amount").toDouble();
         m_order.create_time = query.value("create_time").toDateTime();
@@ -160,36 +169,47 @@ void OrderDetailDialog::loadOrderDetailFromDatabase()
     )");
     dishQuery.addBindValue(m_order.order_id);
 
-    if (dishQuery.exec()) {
-        while (dishQuery.next()) {
-            Dish dish;
-            dish.dish_id = dishQuery.value("dish_id").toInt();
-            dish.name = dishQuery.value("name").toString();
-            dish.price = dishQuery.value("price").toDouble();
-            dish.category = dishQuery.value("category").toString();
-            dish.description = dishQuery.value("description").toString();
-            dish.url = dishQuery.value("url").toString();
-
-            OrderDish orderDish;
-            orderDish.dish = dish;
-            orderDish.quantity = dishQuery.value("count").toInt();
-
-            // rating可能为NULL
-            QVariant ratingVar = dishQuery.value("rating");
-            orderDish.customer_rating = ratingVar.isNull() ? 0.0 : ratingVar.toDouble();
-
-            m_order.dishes.append(orderDish);
-        }
+    if (!dishQuery.exec()) {
+        qDebug() << "查询订单菜品失败:" << dishQuery.lastError().text();
+        return;
     }
+
+    int dishCount = 0;
+    while (dishQuery.next()) {
+        Dish dish;
+        dish.dish_id = dishQuery.value("dish_id").toInt();
+        dish.name = dishQuery.value("name").toString();
+        dish.price = dishQuery.value("price").toDouble();
+        dish.category = dishQuery.value("category").toString();
+        dish.description = dishQuery.value("description").toString();
+        dish.url = dishQuery.value("url").toString();
+
+        OrderDish orderDish;
+        orderDish.dish = dish;
+        orderDish.quantity = dishQuery.value("count").toInt();
+
+        // rating可能为NULL
+        QVariant ratingVar = dishQuery.value("rating");
+        orderDish.customer_rating = ratingVar.isNull() ? 0.0 : ratingVar.toDouble();
+
+        m_order.dishes.append(orderDish);
+        dishCount++;
+    }
+
+    qDebug() << "订单" << m_order.order_id << "加载了" << dishCount << "个菜品";
 }
 
 void OrderDetailDialog::setOrder(const Order& order)
 {
     m_order = order;
 
+    qDebug() << "设置订单" << m_order.order_id << "，数据库valid:" << m_db.isValid() << "，open:" << m_db.isOpen();
+
     // 如果数据库可用，从数据库加载完整的订单信息
-    if (m_db.isOpen()) {
+    if (m_db.isValid() && m_db.isOpen()) {
         loadOrderDetailFromDatabase();
+    } else {
+        qDebug() << "数据库不可用，使用传入的订单数据，菜品数量:" << m_order.dishes.size();
     }
 
     // 更新订单信息
