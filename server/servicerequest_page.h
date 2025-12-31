@@ -29,6 +29,8 @@ public:
 
 public slots:
     int assignTable(int userId);  // 给用户分配一个空闲桌号，返回桌号，-1表示无空闲桌号
+    void onUserLogin(int userId);  // 用户登录时分配桌号
+    void onSubmitOrder(int orderId, int userId);  // 用户提交订单时添加菜品
     void onCallWaiter(int userId);
     void onRefresh();
 

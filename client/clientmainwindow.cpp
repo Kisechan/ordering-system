@@ -30,7 +30,7 @@ ClientMainWindow::ClientMainWindow(NetworkManager* networkMgr, int tmpuserId, QS
     f.setPointSize(20);
     setFont(f);
 
-    setWindowTitle(QStringLiteral("Online Shopping Mall(Client)"));
+    setWindowTitle(QStringLiteral("Ordering-System(Client)"));
     resize(1050, 720);
 
     // .....................................................................
