@@ -5,6 +5,7 @@
 #include "ElaScrollPage.h"
 #include <QList>
 #include <QString>
+#include <QSqlDatabase>
 
 #include "dishcard.h"
 
@@ -20,6 +21,8 @@ class DishManage_Page : public ElaScrollPage
 public:
     explicit DishManage_Page(QWidget* parent = nullptr);
 
+    void setDatabase(const QSqlDatabase& db);
+    void loadDishesFromDatabase();
     void setDishList(const QList<Dish>& dishes);
 
 signals:
@@ -38,6 +41,9 @@ private slots:
 
 private:
     void rebuildList(const QList<Dish>& dishes);
+    bool saveDishToDatabase(const Dish& dish);
+    bool updateDishInDatabase(const Dish& dish);
+    bool deleteDishFromDatabase(int dishId);
 
 private:
     ElaLineEdit*    m_searchEdit = nullptr;
@@ -49,6 +55,7 @@ private:
 
     QList<Dish>     m_allDishes;
     QString         m_keyword;
+    QSqlDatabase    m_db;
 };
 
 #endif // DISHMANAGE_PAGE_H

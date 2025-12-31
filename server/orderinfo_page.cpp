@@ -13,6 +13,12 @@
 #include <QHBoxLayout>
 #include <QWidget>
 #include <QTimer>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QDateTime>
+#include <QJsonArray>
+
+#include "dao/OrderQueryDao.h"
 
 OrderInfo_Page::OrderInfo_Page(QWidget* parent):
     ElaScrollPage(parent)
@@ -79,66 +85,7 @@ OrderInfo_Page::OrderInfo_Page(QWidget* parent):
     connect(m_searchEdit, &ElaLineEdit::returnPressed, this, &OrderInfo_Page::onSearchReturnPressed);
     connect(m_refreshBtn, &ElaPushButton::clicked, this, &OrderInfo_Page::onRefresh);
 
-    // 注意：！！！订单总金额和具体菜品小计总和没有校准（总金额是直接传过来的，各菜品小计是单价*数量计算）
-    // ===== 演示：添加示例订单数据 =====
-    QList<Order> demoOrders;
-
-    Order o1;
-    o1.order_id = 1;
-    o1.user_id = 2;
-    o1.user_name = QStringLiteral("张三");
-    o1.total_amount = 88.00;
-    o1.create_time = QDateTime::fromString("2025-01-03 12:45:30", "yyyy-MM-dd hh:mm:ss");
-    o1.comment = QStringLiteral("味道很好，下次还来");
-
-    // 添加订单菜品（演示用
-    Dish d1;
-    d1.dish_id = 1;
-    d1.name = QStringLiteral("宫保鸡丁");
-    d1.price = 28.00;
-    d1.category = QStringLiteral("川菜");
-    d1.rating = 4.8;
-    d1.url = QStringLiteral(":/Image/vvan.jpg");
-    d1.description = QStringLiteral("经典川菜，微辣香脆");
-
-    OrderDish od1;
-    od1.dish = d1;
-    od1.quantity = 2;           // 点了2份
-    od1.customer_rating = 5.0;  // 客户给5分
-
-    OrderDish od2;
-    od2.dish = d1;
-    od2.quantity = 1;
-    od2.customer_rating = 4.5;
-
-    o1.dishes.append(od1);
-
-    Order o2;
-    o2.order_id = 2;
-    o2.user_id = 3;
-    o2.user_name = QStringLiteral("李四");
-    o2.total_amount = 56.00;
-    o2.create_time = QDateTime::fromString("2025-01-05 18:20:10", "yyyy-MM-dd hh:mm:ss");
-    o2.comment = "";
-    o2.dishes.append(od2);
-
-    Order o3;
-    o3.order_id = 3;
-    o3.user_id = 2;
-    o3.user_name = QStringLiteral("张三");
-    o3.total_amount = 64.00;
-    o3.create_time = QDateTime::fromString("2025-01-06 19:05:00", "yyyy-MM-dd hh:mm:ss");
-    o3.comment = QStringLiteral("所以325是什么意思？？🤔难道是指明日方舟up主魔法ZC目录2024年3月11日的直播，彼时由龙哥哥今天又鸽了主办的明日方舟集成战略民间赛事仙术杯第五届正在如火如荼地展开中，本届仙术杯采取团队赛的形式，ZC 代表冠军厨小队的第二位出战，使用科学分队焰影苇草开但由于临场过于紧张运气Maybe和肉鸽基础不够扎实等原因在第三层关底利刃所指暴毙，局内结算325分啊，我还以为是出自明日方舟up主魔法ZC目录2024年3月11日的直播，彼时由龙哥哥今天又鸽了主办的明日方舟集成战略民间赛事仙术杯第五届正在如火如荼地展开中，本届仙术杯采取团队赛的形式，ZC 代表冠军厨小队的第二位出战，使用科学分队焰影苇草开但由于临场过于紧张运气Maybe和肉鸽基础不够扎实等原因在第三层关底利刃所指暴毙，局内结算325分吗？🤔");
-
-    OrderDish od3;
-    od3.dish = d1;
-    od3.quantity = 2;
-    od3.customer_rating = 0.0;  // 默认0.0为未评分
-    o3.dishes.append(od3);
-
-    demoOrders << o1 << o2 << o3 ;
-
-    setOrderList(demoOrders);
+    // 数据将在 setDatabase() 后通过 loadOrdersFromDatabase() 从数据库加载
 }
 
 OrderInfo_Page::~OrderInfo_Page() {
@@ -148,6 +95,56 @@ void OrderInfo_Page::onSearchTextChanged(const QString& text)
 {
     m_keyword = text.trimmed();
     m_searchDebounce->start();
+}
+
+void OrderInfo_Page::setDatabase(const QSqlDatabase& db)
+{
+    m_db = db;
+}
+
+void OrderInfo_Page::loadOrdersFromDatabase()
+{
+    if (!m_db.isValid()) {
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
+                            QStringLiteral("数据库连接无效"), 2000, this);
+        return;
+    }
+
+    if (!m_db.isOpen()) {
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
+                            QStringLiteral("数据库连接未打开"), 2000, this);
+        return;
+    }
+
+    // 使用OrderQueryDao查询订单
+    db::OrderQueryDao orderDao(m_db);
+    QJsonObject result = orderDao.getAdminOrderBriefs();
+
+    int code = result.value("code").toInt();
+    if (code != 200) {
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
+                            result.value("msg").toString(), 2000, this);
+        return;
+    }
+
+    QJsonArray orderArray = result.value("data").toArray();
+    QList<Order> orders;
+
+    for (const QJsonValue& val : orderArray) {
+        QJsonObject obj = val.toObject();
+        Order order;
+        order.order_id = obj.value("order_id").toInt();
+        order.user_name = obj.value("username").toString();
+        order.total_amount = obj.value("total_amount").toDouble();
+        order.create_time = QDateTime::fromString(obj.value("create_time").toString(), Qt::ISODate);
+        order.comment = obj.value("comment").toString();
+
+        orders.append(order);
+    }
+
+    setOrderList(orders);
+    ElaMessageBar::success(ElaMessageBarType::BottomRight, QStringLiteral("成功"),
+                          QStringLiteral("加载了 %1 条订单").arg(orders.size()), 1500, this);
 }
 
 void OrderInfo_Page::setOrderList(const QList<Order>& orders)
@@ -163,9 +160,14 @@ void OrderInfo_Page::onSearchReturnPressed()
 
 void OrderInfo_Page::onRefresh()
 {
-    emit refreshOrderRequested();
-    ElaMessageBar::success(ElaMessageBarType::BottomRight, QStringLiteral("提示"),
-                          QStringLiteral("正在刷新订单列表..."), 1500, this);
+    if (m_db.isOpen()) {
+        loadOrdersFromDatabase();
+        ElaMessageBar::success(ElaMessageBarType::BottomRight, QStringLiteral("提示"),
+                              QStringLiteral("订单列表已刷新"), 1500, this);
+    } else {
+        ElaMessageBar::warning(ElaMessageBarType::BottomRight, QStringLiteral("提示"),
+                              QStringLiteral("数据库连接未打开"), 1500, this);
+    }
 }
 
 void OrderInfo_Page::applyFilterNow()
@@ -206,6 +208,7 @@ void OrderInfo_Page::onViewOrderDetail(int orderId)
 
     // 显示订单详情对话框
     auto* dialog = new OrderDetailDialog(this);
+    dialog->setDatabase(m_db);
     dialog->setOrder(*foundOrder);
     dialog->exec();
     dialog->deleteLater();

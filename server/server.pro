@@ -46,7 +46,8 @@ SOURCES += \
         servedialog.cpp \
         server.cpp \
         servicerequest_page.cpp \
-        servicerequestcard.cpp
+        servicerequestcard.cpp \
+
 
 HEADERS += \
         dishcard.h \

@@ -21,11 +21,17 @@ class Server : public QTcpServer {
 public:
     static Server* getInstance();
 
+    QString getUserName(int userId);
+
     // 启动服务端，绑定端口
     bool start(quint16 port);
 
 signals:
-    void callWaiter(QString userName);
+    void login(int userId);
+
+    void callWaiter(int userId);
+
+    void submitOrder(int orderId, int userId);
 
 protected:
     void incomingConnection(qintptr socketDescriptor) override;

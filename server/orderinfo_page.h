@@ -3,6 +3,7 @@
 #include "ElaScrollPage.h"
 #include "ordercard.h"
 #include <QList>
+#include <QSqlDatabase>
 
 class ElaLineEdit;
 class ElaPushButton;
@@ -16,6 +17,12 @@ class OrderInfo_Page : public ElaScrollPage {
 public:
     Q_INVOKABLE explicit OrderInfo_Page(QWidget* parent = nullptr);
     ~OrderInfo_Page();
+
+    // 设置数据库连接
+    void setDatabase(const QSqlDatabase& db);
+
+    // 从数据库加载订单
+    void loadOrdersFromDatabase();
 
     // 设置订单列表
     void setOrderList(const QList<Order>& orders);
@@ -48,6 +55,9 @@ private:
     QTimer*         m_searchDebounce = nullptr;
     QList<Order>    m_allOrders;
     QString         m_keyword;
+
+    // 数据库连接
+    QSqlDatabase    m_db;
 
 };
 
