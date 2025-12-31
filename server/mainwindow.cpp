@@ -36,8 +36,12 @@ MainWindow::MainWindow(QWidget *parent) :
         qDebug() << "已连接Server的callWaiter信号到ServiceRequest_Page";
         
         // 连接用户登录信号，自动分配桌号
-        connect(server, &Server::login, service_request_page_, &ServiceRequest_Page::assignTable);
-        qDebug() << "已连接Server的login信号到ServiceRequest_Page::assignTable";
+        connect(server, &Server::login, service_request_page_, &ServiceRequest_Page::onUserLogin);
+        qDebug() << "已连接Server的login信号到ServiceRequest_Page::onUserLogin";
+        
+        // 连接订单提交信号，添加菜品到上菜队列
+        connect(server, &Server::submitOrder, service_request_page_, &ServiceRequest_Page::onSubmitOrder);
+        qDebug() << "已连接Server的submitOrder信号到ServiceRequest_Page::onSubmitOrder";
     }
 
 }
