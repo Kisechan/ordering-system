@@ -157,6 +157,7 @@ void Server::processRequest(QTcpSocket* socket, const QJsonObject& request) {
         emit callWaiter(userId);
         response["code"] = 200;
         response["msg"] = "服务员已收到您的呼叫，请耐心等待~";
+        qDebug()<<"已发送呼叫信号";
     } else if (type == "order_submit") {
         int userId = userMap[socket].userId;
         QVector<db::DishCount> dishCountList;

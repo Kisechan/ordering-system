@@ -3,6 +3,8 @@
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QShowEvent>
+#include <QPushButton>
 
 #include "ElaText.h"
 #include "ElaPushButton.h"
@@ -145,6 +147,22 @@ void ServeDialog::onDishServed(const QString& dishName)
                                   QStringLiteral("成功"),
                                   QStringLiteral("菜品已送达"),
                                   1500, this);
+        }
+    }
+}
+
+void ServeDialog::showEvent(QShowEvent* event)
+{
+    ElaContentDialog::showEvent(event);
+
+    // 在对话框显示后，查找并隐藏底部的三个按钮
+    QList<QPushButton*> buttons = this->findChildren<QPushButton*>();
+    for (QPushButton* btn : buttons) {
+        // 通过对象名或文本特征识别底部按钮并隐藏
+        QString text = btn->text().toLower();
+        if (text.contains("cancel") || text.contains("minimum") || text.contains("exit") ||
+            text.contains("取消") || text.contains("最小化") || text.contains("退出")) {
+            btn->hide();
         }
     }
 }
