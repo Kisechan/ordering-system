@@ -90,26 +90,8 @@ DishManage_Page::DishManage_Page(QWidget* parent):
     connect(m_searchEdit, &ElaLineEdit::returnPressed,this, &DishManage_Page::onSearchReturnPressed);
     connect(m_addBtn, &ElaPushButton::clicked, this, &DishManage_Page::onAddDish);
 
-    // ===== 演示：先放 1 个宫保鸡丁卡片 =====
-    Dish d;
-    d.dish_id = 1;
-    d.name = QStringLiteral("宫保鸡丁");
-    d.price = 28.00;
-    d.category = QStringLiteral("川菜");
-    d.rating = 4.8;
-    d.url = QStringLiteral(":/Image/vvan.jpg");
-    d.description = QStringLiteral("经典川菜，微辣香脆");
 
-    Dish d1;
-    d1.dish_id = 2;
-    d1.name = QStringLiteral("好好好");
-    d1.price = 88.00;
-    d1.category = QStringLiteral("湘菜");
-    d1.rating = 4.9;
-    d1.url = QStringLiteral(":/include/Image/Moon.jpg");
-    d1.description = QStringLiteral("good");
-    // 真实情况每个dish不同
-    setDishList({d,d1,d,d,d1,d,d,d,d1,d,d,d,d1,d});
+
 }
 
 void DishManage_Page::onSearchTextChanged(const QString& text)

@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
         "PORT=3306;"
         "DATABASE=restaurant;"
         "UID=root;"
-        "PWD=123456;"
+        "PWD=@1883848ll;"
         "OPTION=3;";
 
     auto r = db::DbManager::instance().init(cfg);
