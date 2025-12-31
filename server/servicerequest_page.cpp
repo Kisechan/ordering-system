@@ -17,6 +17,9 @@
 #include "ElaMessageBar.h"
 
 #include "dao/UserDao.h"
+#include "dao/OrderDishDao.h"
+#include "dao/DishDao.h"
+#include <QSqlQuery>
 
 ServiceRequest_Page::ServiceRequest_Page(QWidget* parent)
     : ElaScrollPage(parent)
@@ -79,6 +82,39 @@ ServiceRequest_Page::ServiceRequest_Page(QWidget* parent)
 
     // 初始化10个桌号
     initializeTables();
+
+    // ===== 测试：模拟用户登录并分配桌号 =====
+    qDebug() << "\n========== 开始测试桌号分配功能 ==========";
+
+    // 模拟3个用户登录
+    int testUserId1 = 1001;
+    int testUserId2 = 1002;
+    int testUserId3 = 1003;
+
+    qDebug() << "\n[测试] 模拟用户" << testUserId1 << "登录...";
+    int table1 = assignTable(testUserId1);
+    qDebug() << "[测试] 用户" << testUserId1 << "分配到桌号:" << table1;
+
+    qDebug() << "\n[测试] 模拟用户" << testUserId2 << "登录...";
+    int table2 = assignTable(testUserId2);
+    qDebug() << "[测试] 用户" << testUserId2 << "分配到桌号:" << table2;
+
+    qDebug() << "\n[测试] 模拟用户" << testUserId3 << "登录...";
+    int table3 = assignTable(testUserId3);
+    qDebug() << "[测试] 用户" << testUserId3 << "分配到桌号:" << table3;
+
+    // 验证映射关系
+    qDebug() << "\n[测试] 验证用户-桌号映射:";
+    qDebug() << "[测试] 用户" << testUserId1 << "-> 桌号" << findTableByUserId(testUserId1);
+    qDebug() << "[测试] 用户" << testUserId2 << "-> 桌号" << findTableByUserId(testUserId2);
+    qDebug() << "[测试] 用户" << testUserId3 << "-> 桌号" << findTableByUserId(testUserId3);
+
+    // 测试呼叫服务员
+    qDebug() << "\n[测试] 模拟用户" << testUserId2 << "呼叫服务员...";
+    onCallWaiter(testUserId2);
+
+    qDebug() << "\n========== 桌号分配功能测试完成 ==========\n";
+
 }
 
 void ServiceRequest_Page::setDatabase(const QSqlDatabase& db)
@@ -270,12 +306,17 @@ void ServiceRequest_Page::onRefresh()
 
     // 遍历所有非空闲桌号，根据order_id从数据库查询菜品
     rebuildList(m_allTables);
+    for(auto& table:m_allTables){
+        qDebug()<<table.table_number<<"号桌对应用户"<<table.customer_id;
+    }
 
     emit refreshRequested();
     ElaMessageBar::information(ElaMessageBarType::BottomRight,
                               QStringLiteral("提示"),
                               QStringLiteral("正在刷新桌号服务列表..."),
                               1500, this);
+
+
 }
 
 void ServiceRequest_Page::setCardsEnabled(bool enabled)
@@ -495,3 +536,4 @@ void ServiceRequest_Page::onDishServed(int tableNumber, const QString& dishName)
         }
     }
 }
+
