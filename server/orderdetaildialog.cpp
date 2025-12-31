@@ -4,6 +4,10 @@
 #include <QHBoxLayout>
 #include <QWidget>
 #include <QVariant>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QJsonObject>
+#include <QJsonArray>
 
 #include "ElaText.h"
 #include "ElaScrollArea.h"
@@ -117,9 +121,76 @@ OrderDetailDialog::OrderDetailDialog(QWidget* parent)
     setCentralWidget(content);
 }
 
+void OrderDetailDialog::setDatabase(const QSqlDatabase& db)
+{
+    m_db = db;
+}
+
+void OrderDetailDialog::loadOrderDetailFromDatabase()
+{
+    if (!m_db.isOpen()) return;
+
+    // 查询订单基本信息和关联的用户名
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        SELECT o.order_id, o.user_id, u.username, o.total_amount, o.create_time, o.comment
+        FROM t_order o
+        LEFT JOIN t_user u ON o.user_id = u.user_id
+        WHERE o.order_id = ?
+    )");
+    query.addBindValue(m_order.order_id);
+
+    if (query.exec() && query.next()) {
+        m_order.user_name = query.value("username").toString();
+        m_order.total_amount = query.value("total_amount").toDouble();
+        m_order.create_time = query.value("create_time").toDateTime();
+        m_order.comment = query.value("comment").toString();
+    }
+
+    // 查询订单菜品列表
+    m_order.dishes.clear();
+    QSqlQuery dishQuery(m_db);
+    dishQuery.prepare(R"(
+        SELECT d.dish_id, d.name, d.price, d.category, d.description, d.url,
+               od.count, od.rating
+        FROM t_order_dish od
+        JOIN t_dish d ON od.dish_id = d.dish_id
+        WHERE od.order_id = ?
+        ORDER BY d.dish_id ASC
+    )");
+    dishQuery.addBindValue(m_order.order_id);
+
+    if (dishQuery.exec()) {
+        while (dishQuery.next()) {
+            Dish dish;
+            dish.dish_id = dishQuery.value("dish_id").toInt();
+            dish.name = dishQuery.value("name").toString();
+            dish.price = dishQuery.value("price").toDouble();
+            dish.category = dishQuery.value("category").toString();
+            dish.description = dishQuery.value("description").toString();
+            dish.url = dishQuery.value("url").toString();
+
+            OrderDish orderDish;
+            orderDish.dish = dish;
+            orderDish.quantity = dishQuery.value("count").toInt();
+
+            // rating可能为NULL
+            QVariant ratingVar = dishQuery.value("rating");
+            orderDish.customer_rating = ratingVar.isNull() ? 0.0 : ratingVar.toDouble();
+
+            m_order.dishes.append(orderDish);
+        }
+    }
+}
+
 void OrderDetailDialog::setOrder(const Order& order)
 {
     m_order = order;
+
+    // 如果数据库可用，从数据库加载完整的订单信息
+    if (m_db.isOpen()) {
+        loadOrderDetailFromDatabase();
+    }
 
     // 更新订单信息
     if (m_orderIdLabel) {

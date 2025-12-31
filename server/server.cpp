@@ -20,6 +20,13 @@ Server* Server::getInstance() {
     return server;
 }
 
+QString Server::getUserName(int userId) {
+
+    // TODO:遍历usermap获取username
+
+
+}
+
 bool Server::start(quint16 port) {
     if (listen(QHostAddress::Any, port)) {
         qDebug() << "Server started, listening on port" << port;

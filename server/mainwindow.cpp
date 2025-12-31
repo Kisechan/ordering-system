@@ -87,6 +87,19 @@ void MainWindow::initContent() {
 
 }
 
+
+void MainWindow::setDatabase(const QSqlDatabase& db)
+{
+    m_db = db;
+
+    // 设置数据库到各个页面
+    if (order_info_page_) {
+        order_info_page_->setDatabase(m_db);
+        // 初始加载订单数据
+        order_info_page_->loadOrdersFromDatabase();
+    }
+}
+
 /*
 void MainWindow::onNewOrderArrived()
 {
@@ -120,39 +133,11 @@ void MainWindow::onPageChanged(ElaNavigationType::NavigationNodeType /*nodeType*
     // 当切换到订单管理页面时刷新数据
     if (nodeKey == QStringLiteral("订单管理") && order_info_page_) {
 
-        // TODO: 从数据库重新加载订单列表
         qDebug() << "刷新订单管理页面数据";
-        // 示例：设置演示订单数据
-        /*
-        Order o;
-        o.order_id = 1001;
-        o.user_id = 2001;
-        o.total_amount = 88.00;
-        o.create_time = QDateTime::fromString("2025-12-30 10:45:30", "yyyy-MM-dd hh:mm:ss");
-        o.comment = QStringLiteral("少放辣椒，多加香菜");
-
-        // 添加订单中的菜品
-        OrderDish od1;
-        od1.dish.dish_id = 1;
-        od1.dish.name = QStringLiteral("宫保鸡丁");
-        od1.dish.price = 28.00;
-        od1.dish.url = QStringLiteral(":/Image/vvan.jpg");
-        od1.quantity = 2;
-        od1.customer_rating = 4.5;
-
-        OrderDish od2;
-        od2.dish.dish_id = 2;
-        od2.dish.name = QStringLiteral("鱼香肉丝");
-        od2.dish.price = 32.00;
-        od2.dish.url = QStringLiteral(":/Image/vvan.jpg");
-        od2.quantity = 1;
-        od2.customer_rating = 5.0;
-
-        o.dishes.append(od1);
-        o.dishes.append(od2);
-
-        order_info_page_->setOrderList({o, o, o});
-        */
+        // 从数据库重新加载订单列表
+        if (m_db.isOpen()) {
+            order_info_page_->loadOrdersFromDatabase();
+        }
     }
 
     // 当切换到服务请求页面时刷新数据

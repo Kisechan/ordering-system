@@ -4,6 +4,7 @@
 
 #include "ElaContentDialog.h"
 #include "ordercard.h"
+#include <QSqlDatabase>
 
 class QVBoxLayout;
 class ElaText;
@@ -16,12 +17,15 @@ public:
     explicit OrderDetailDialog(QWidget* parent = nullptr);
 
     void setOrder(const Order& order);
+    void setDatabase(const QSqlDatabase& db);
 
 private:
     void buildDishList();
+    void loadOrderDetailFromDatabase();
 
 private:
     Order m_order;
+    QSqlDatabase m_db;
     QVBoxLayout* m_dishListLayout = nullptr;
     QWidget* m_dishListContainer = nullptr;
 

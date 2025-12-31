@@ -29,6 +29,10 @@ int main(int argc, char *argv[]) {
     }
 
     MainWindow w;
+    // 设置数据库连接
+    QSqlDatabase db = db::DbManager::instance().db();
+    w.setDatabase(db);
+
     w.show();
 
     Server* server = Server::getInstance();
