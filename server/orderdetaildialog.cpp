@@ -16,6 +16,10 @@
 #include "ElaPushButton.h"
 #include "dishcard.h"
 
+#include "dao/OrderDao.h"
+#include "dao/OrderDishDao.h"
+#include "dao/DishDao.h"
+
 OrderDetailDialog::OrderDetailDialog(QWidget* parent)
     : ElaContentDialog(parent)
 {
@@ -134,6 +138,7 @@ void OrderDetailDialog::loadOrderDetailFromDatabase()
         return;
     }
 
+    // 由于dao层没有单独查询单个订单详情的接口，直接使用SQL查询
     // 查询订单基本信息和关联的用户名
     QSqlQuery query(m_db);
     query.prepare(R"(

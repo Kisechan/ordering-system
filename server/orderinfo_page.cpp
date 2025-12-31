@@ -16,6 +16,9 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QDateTime>
+#include <QJsonArray>
+
+#include "dao/OrderQueryDao.h"
 
 OrderInfo_Page::OrderInfo_Page(QWidget* parent):
     ElaScrollPage(parent)
@@ -82,7 +85,7 @@ OrderInfo_Page::OrderInfo_Page(QWidget* parent):
     connect(m_searchEdit, &ElaLineEdit::returnPressed, this, &OrderInfo_Page::onSearchReturnPressed);
     connect(m_refreshBtn, &ElaPushButton::clicked, this, &OrderInfo_Page::onRefresh);
 
-
+    // 数据将在 setDatabase() 后通过 loadOrdersFromDatabase() 从数据库加载
 }
 
 OrderInfo_Page::~OrderInfo_Page() {
@@ -101,40 +104,47 @@ void OrderInfo_Page::setDatabase(const QSqlDatabase& db)
 
 void OrderInfo_Page::loadOrdersFromDatabase()
 {
+    if (!m_db.isValid()) {
+        ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
+                            QStringLiteral("数据库连接无效"), 2000, this);
+        return;
+    }
+
     if (!m_db.isOpen()) {
         ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
                             QStringLiteral("数据库连接未打开"), 2000, this);
         return;
     }
 
-    QSqlQuery query(m_db);
-    query.prepare(R"(
-        SELECT o.order_id, o.user_id, u.username, o.total_amount, o.create_time, o.comment
-        FROM t_order o
-        LEFT JOIN t_user u ON o.user_id = u.user_id
-        ORDER BY o.create_time DESC
-    )");
+    // 使用OrderQueryDao查询订单
+    db::OrderQueryDao orderDao(m_db);
+    QJsonObject result = orderDao.getAdminOrderBriefs();
 
-    if (!query.exec()) {
+    int code = result.value("code").toInt();
+    if (code != 200) {
         ElaMessageBar::error(ElaMessageBarType::BottomRight, QStringLiteral("错误"),
-                            QStringLiteral("查询订单失败: ") + query.lastError().text(), 2000, this);
+                            result.value("msg").toString(), 2000, this);
         return;
     }
 
+    QJsonArray orderArray = result.value("data").toArray();
     QList<Order> orders;
-    while (query.next()) {
+
+    for (const QJsonValue& val : orderArray) {
+        QJsonObject obj = val.toObject();
         Order order;
-        order.order_id = query.value("order_id").toInt();
-        order.user_id = query.value("user_id").toInt();
-        order.user_name = query.value("username").toString();
-        order.total_amount = query.value("total_amount").toDouble();
-        order.create_time = query.value("create_time").toDateTime();
-        order.comment = query.value("comment").toString();
+        order.order_id = obj.value("order_id").toInt();
+        order.user_name = obj.value("username").toString();
+        order.total_amount = obj.value("total_amount").toDouble();
+        order.create_time = QDateTime::fromString(obj.value("create_time").toString(), Qt::ISODate);
+        order.comment = obj.value("comment").toString();
 
         orders.append(order);
     }
 
     setOrderList(orders);
+    ElaMessageBar::success(ElaMessageBarType::BottomRight, QStringLiteral("成功"),
+                          QStringLiteral("加载了 %1 条订单").arg(orders.size()), 1500, this);
 }
 
 void OrderInfo_Page::setOrderList(const QList<Order>& orders)
@@ -198,9 +208,7 @@ void OrderInfo_Page::onViewOrderDetail(int orderId)
 
     // 显示订单详情对话框
     auto* dialog = new OrderDetailDialog(this);
-
     dialog->setDatabase(m_db);
-
     dialog->setOrder(*foundOrder);
     dialog->exec();
     dialog->deleteLater();
