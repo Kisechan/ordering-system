@@ -71,7 +71,7 @@ QJsonObject DishDao::insertDish(const QJsonObject& dish) const {
     if (!dbIsOpen(db_, &err)) return makeErr(500, err);
 
     QSqlQuery q(db_);
-    q.prepare("INSERT INTO t_dish(name, price, category, url, description) VALUES(?, ?, ?, ?, ?, ?)");
+    q.prepare("INSERT INTO t_dish(name, price, category, url, description) VALUES(?, ?, ?, ?, ?)");
     q.addBindValue(dish.value("name").toString());
     q.addBindValue(dish.value("price").toDouble());
     q.addBindValue(dish.value("category").toString());

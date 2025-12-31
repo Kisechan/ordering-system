@@ -19,6 +19,9 @@ public:
     void setOrder(const Order& order);
     void setDatabase(const QSqlDatabase& db);
 
+protected:
+    void showEvent(QShowEvent* event) override;
+
 private:
     void buildDishList();
     void loadOrderDetailFromDatabase();
