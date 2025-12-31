@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, &ElaWindow::navigationNodeClicked,
             this, &MainWindow::onPageChanged);
 
-    // 连接Server的callWaiter信号到ServiceRequest_Page
+    // 连接Server信号到ServiceRequest_Page
     Server* server = Server::getInstance();
     if (server && service_request_page_) {
         // 连接呼叫服务员信号
