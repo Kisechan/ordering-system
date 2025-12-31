@@ -8,5 +8,17 @@
     </qresource>
     <qresource prefix="/">
         <file>Image/vvan.jpg</file>
+        <file>Image/baiqieji.jpg</file>
+        <file>Image/Cirno.jpg</file>
+        <file>Image/gongbaojiding.jpg</file>
+        <file>Image/hongshaorou.jpg</file>
+        <file>Image/huiguorou.jpg</file>
+        <file>Image/mapodoufu.jpg</file>
+        <file>Image/MicaBase.png</file>
+        <file>Image/Moon.jpg</file>
+        <file>Image/noise.png</file>
+        <file>Image/qingzhengluyu.jpg</file>
+        <file>Image/tangculiji.jpg</file>
+        <file>Image/yuxiangrousi.jpg</file>
     </qresource>
 </RCC>
