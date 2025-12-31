@@ -27,6 +27,14 @@ MainWindow::MainWindow(QWidget *parent) :
     // 监听页面切换事件，实现自动刷新
     connect(this, &ElaWindow::navigationNodeClicked,
             this, &MainWindow::onPageChanged);
+
+    // 连接Server的callWaiter信号到ServiceRequest_Page
+    Server* server = Server::getInstance();
+    if (server && service_request_page_) {
+        connect(server, &Server::callWaiter, service_request_page_, &ServiceRequest_Page::onCallWaiter);
+        qDebug() << "已连接Server的callWaiter信号到ServiceRequest_Page";
+    }
+
 }
 
 MainWindow::~MainWindow()
@@ -103,6 +111,11 @@ void MainWindow::setDatabase(const QSqlDatabase& db)
         // 初始加载菜品数据
         dish_manage_page_->loadDishesFromDatabase();
     }
+
+    if (service_request_page_) {
+        service_request_page_->setDatabase(m_db);
+    }
+
 }
 
 /*
